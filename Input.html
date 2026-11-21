@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--line:#dde3ea;--text:#1d2733;--sub:#6b7a8c;--pri:#1565c0;--danger:#c62828}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"BIZ UDPGothic","Noto Sans JP","Hiragino Sans","Meiryo",sans-serif;font-size:15px;padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;background:#0e1621;color:#fff;padding:10px 14px}
+header .row{display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:15px;white-space:nowrap}
+@media (max-width:420px){.mnav{gap:5px}.mnav span{min-width:84px;font-size:14px}.mnav button{width:32px}}
+.mnav{display:flex;align-items:center;gap:8px}
+.mnav button{background:#2b3b4e;color:#fff;border:none;border-radius:8px;width:36px;height:32px;font-size:16px}
+.mnav span{font-weight:800;min-width:96px;text-align:center}
+.tabs{display:flex;margin-top:8px;background:#2b3b4e;border-radius:8px;padding:3px}
+.tabs button{flex:1;border:none;background:none;color:#cfd8e3;padding:7px;border-radius:6px;font-size:14px;font-weight:700}
+.tabs button.on{background:#fff;color:#0e1621}
+main{padding:12px}
+.day{font-size:13px;color:var(--sub);font-weight:800;margin:14px 2px 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+.card .body{flex:1;min-width:0}
+.card .t{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .m{font-size:12px;color:var(--sub);margin-top:2px}
+.chip{font-size:11px;font-weight:800;padding:2px 6px;border-radius:5px;color:#fff;margin-right:4px}
+.type{font-size:11px;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--sub)}
+.bar{width:6px;align-self:stretch;border-radius:3px}
+.chk{width:24px;height:24px}
+.done .t{text-decoration:line-through;color:var(--sub)}
+.empty{color:var(--sub);text-align:center;padding:30px 0}
+.fab{position:fixed;right:16px;bottom:20px;background:var(--pri);color:#fff;border:none;border-radius:28px;padding:14px 22px;font-size:16px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:10;align-items:flex-end}
+.ov.on{display:flex}
+.sheet{background:#fff;width:100%;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px}
+.sheet h2{font-size:17px;margin-bottom:10px}
+label{display:block;font-size:12px;color:var(--sub);font-weight:700;margin:10px 0 4px}
+input,select,textarea{width:100%;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-family:inherit}
+textarea{height:64px}
+.two{display:flex;gap:8px}.two>div{flex:1}
+.seg{display:flex;gap:6px}.seg button{flex:1;padding:9px 0;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:14px;font-weight:700}
+.seg button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.colors{display:flex;gap:8px;flex-wrap:wrap}
+.colors button{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.colors button.on{box-shadow:0 0 0 3px var(--text)}
+.acts{display:flex;gap:8px;margin-top:16px}
+.acts button{flex:1;padding:12px;border-radius:10px;border:none;font-size:15px;font-weight:800}
+.save{background:var(--pri);color:#fff}.cancel{background:#e3e8ee}.del{background:#fde8e8;color:var(--danger)}
+.theme{flex:1;border:2px solid var(--line);border-radius:10px;padding:6px;background:#fff;font-size:12px;font-weight:800}
+.theme.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri)}
+.theme .sw{height:34px;border-radius:6px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid2 input[type=color]{height:40px;padding:2px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.panel h3{font-size:14px;margin-bottom:4px}
+.hint{font-size:11px;color:var(--sub);margin-top:4px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#263238;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;display:none;z-index:20}
+/* ===== PC表示 ===== */
+.mnav .vt{width:auto;white-space:nowrap;font-size:12px}
+.vt{background:#2b3b4e;color:#fff;border:none;border-radius:8px;padding:0 10px;height:32px;font-size:12px;font-weight:700;margin-left:8px}
+.lg{display:block}
+body.pc{padding-bottom:24px;font-size:14px}
+body.pc header{padding:10px 24px;height:56px}
+body.pc header .row{height:36px}
+body.pc header h1{font-size:18px}
+body.pc .tabs{position:fixed;left:0;top:56px;bottom:0;width:190px;flex-direction:column;margin:0;border-radius:0;background:#16212d;padding:14px 10px;gap:4px}
+body.pc .tabs button{flex:none;text-align:left;padding:11px 14px;font-size:14px;border-radius:8px}
+body.pc main{margin-left:190px;padding:20px 28px;max-width:1500px}
+body.pc .fab{position:fixed;top:12px;bottom:auto;right:24px;z-index:6;padding:7px 18px;font-size:14px;border-radius:8px;box-shadow:none}
+body.pc header .mnav{margin-right:120px}
+body.pc .ov{align-items:center;justify-content:center}
+body.pc .sheet{max-width:620px;border-radius:16px;max-height:90vh;padding:22px}
+body.pc .lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px;align-items:start}
+body.pc .lg .card{margin:0;cursor:pointer}
+body.pc .card:hover{border-color:var(--pri)}
+body.pc .sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:12px;align-items:start}
+body.pc .sg .panel{margin:0}
+body.pc .acts.st{max-width:420px}
+/* 月カレンダー（PCの予定タブ） */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.cal .hd{padding:7px;text-align:center;font-weight:800;font-size:13px;background:#eef2f6;color:var(--sub)}
+.cal .hd.sun{color:#d32f2f}.cal .hd.sat{color:#1565c0}
+.cal .dc{min-height:112px;border-top:1px solid var(--line);border-left:1px solid var(--line);padding:5px;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0}
+.cal .dc:nth-child(7n+1){border-left:none}
+.cal .dc:hover{background:#f3f8ff}
+.cal .dc.out{background:#f7f9fb}.cal .dc.out .dn{color:#b8c2cc}
+.cal .dc.today{box-shadow:inset 0 0 0 2px #f0a000}
+.cal .dn{font-weight:800;font-size:13px;display:flex;justify-content:space-between}
+.cal .dn .add{color:var(--pri);opacity:0;font-size:12px}.cal .dc:hover .dn .add{opacity:1}
+.cal .dc.sun .dn{color:#d32f2f}.cal .dc.sat .dn{color:#1565c0}
+.ce{font-size:12px;padding:2px 6px;border-radius:5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.ce:hover{filter:brightness(1.12)}
+.ce.cont{border-top-left-radius:0;border-bottom-left-radius:0;opacity:.85}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--sub);margin:0 0 10px;align-items:center;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.fbar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);font-weight:700;margin:0 2px 10px}
+.fbar select{width:auto;min-width:140px;padding:6px 10px;font-size:14px}
+.type.sitec{background:#fff3e0;border-color:#ffcc80;color:#e65100}
+.type.recc{background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32}
+.type.calc{background:#e3f2fd;border-color:#90caf9;color:#1565c0}
+.seg.dows button{padding:9px 0;font-size:14px}
+.msec{margin-top:26px}
+.msec>h2{font-size:16px;margin:0 2px 10px;display:flex;align-items:center;gap:8px}
+.msec>h2 small{font-size:12px;color:var(--sub);font-weight:400}
+.mrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--line);cursor:pointer}
+.mrow:first-of-type{border-top:none}
+.mrow:hover{background:#f6f9fc}
+.mrow .sw{width:14px;height:14px;border-radius:4px;flex:none}
+.mrow .nm{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .sb{font-size:12px;color:var(--sub);white-space:nowrap}
+.mrow.off .nm{color:var(--sub);text-decoration:line-through}
+.mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.mhead h3{margin:0}
+.mini{border:1px solid var(--pri);color:var(--pri);background:#fff;border-radius:8px;padding:5px 12px;font-size:13px;font-weight:800}
+.calpick{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:6px}
+.calpick div{padding:8px 10px;border-top:1px solid var(--line);cursor:pointer;display:flex;gap:8px;align-items:center;font-size:14px}
+.calpick div:first-child{border-top:none}
+.calpick div:hover,.calpick div.on{background:#e3f2fd}
+.man summary{font-weight:800;font-size:16px;cursor:pointer;padding:4px 0;list-style:none}
+.man summary::before{content:'▶';display:inline-block;font-size:11px;margin-right:8px;color:var(--pri);transition:transform .2s}
+.man[open] summary::before{transform:rotate(90deg)}
+.man ol{margin:8px 0 2px 22px;font-size:15px;line-height:1.9}
+.tips{margin:6px 0 0 20px;font-size:14px;line-height:1.8}
+@media (max-width:420px){.tabs button{font-size:13px;padding:7px 2px}}
+.stnav{display:flex;gap:6px;overflow-x:auto;margin:0 -2px 12px;padding:2px;scrollbar-width:none}
+.stnav::-webkit-scrollbar{display:none}
+.stnav button{flex:none;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 13px;font-size:13px;font-weight:800;color:var(--text)}
+.stnav button.on{background:#0e1621;color:#fff;border-color:#0e1621}
+.stnav .ic{font-size:15px}
+.stbody{padding-bottom:70px}
+.stbody .msec{margin-top:0}
+.panel h3 .psub{font-size:12px;color:var(--sub);font-weight:400}
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:7;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:#fff;border-top:1px solid var(--line);padding:10px 14px;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.savebar span{font-size:12px;color:var(--sub)}
+.savebar .save{border:none;border-radius:10px;padding:11px 34px;font-size:15px;font-weight:800}
+body.pc .savebar{left:190px;padding:12px 28px}
+body.pc .stnav{flex-wrap:wrap;overflow:visible}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip2{border:1px solid var(--line);background:#f3f5f8;color:var(--sub);border-radius:18px;padding:7px 12px;font-size:13px;font-weight:800}
+.chip2.on{background:#e3f2fd;border-color:#90caf9;color:#1565c0}
+/* TV配置の見本 */
+.lp{display:flex;gap:4px;height:92px;background:#0e1621;border-radius:8px;padding:5px;margin:2px 0 4px}
+.lp-board{flex:1;display:flex;flex-direction:column;gap:3px}
+.lp-l{flex:1;background:#2b3b4e;color:#cfd8e3;border-radius:4px;font-size:11px;display:flex;align-items:center;padding:0 8px;font-weight:700}
+.lp-l.main{flex:1.8;background:#3b6ea5;color:#fff}
+.lpm{background:#e65100;color:#fff;border-radius:3px;padding:0 4px;margin-left:6px;font-size:9px}
+.lp-side{width:28%;display:flex;flex-direction:column;gap:3px}
+.lp-side.slim{width:22%}
+.lp-side div{flex:1;background:#152030;border:1px solid #2b3b4e;color:#9fb2c6;border-radius:4px;font-size:10px;display:flex;align-items:center;padding:0 5px;white-space:nowrap;overflow:hidden}
+.ochips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px}
+.ochip{min-height:44px;padding:0 16px;border-radius:22px;border:2px solid var(--line);background:#fff;color:var(--text);
+  font-size:15px;font-weight:800;display:inline-flex;align-items:center;gap:7px;-webkit-tap-highlight-color:transparent}
+.ochip i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.ochip.on{background:var(--c);border-color:var(--c);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.ochip.on i{background:#fff}
+.ochip.on::after{content:'✓';margin-left:2px}
+#loading{text-align:center;color:var(--sub);padding:30px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>📅 予定表 入力</h1>
+    <div class="mnav"><button onclick="moveMonth(-1)">◀</button><span id="ymLbl"></span><button onclick="moveMonth(1)">▶</button><button class="vt" id="vt" onclick="toggleView()"></button></div>
+  </div>
+  <div class="tabs"><button id="tabEv" class="on" onclick="setTab('ev')">予定</button><button id="tabTk" onclick="setTab('tk')">期限</button><button id="tabNt" onclick="setTab('nt')">お知らせ</button><button id="tabSt" onclick="setTab('st')">設定</button><button id="tabHp" onclick="setTab('hp')">使い方</button></div>
+</header>
+<main id="main"><div id="loading">読み込み中…</div></main>
+<button class="fab" id="fab" onclick="openForm()">＋ 追加</button>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeForm()"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+
+<script>
+const KEY = <?!= keyJson ?>;
+const WD = ['日','月','火','水','木','金','土'];
+const COLORS = ['', '#3b6ea5', '#6a4fa3', '#2e7d32', '#ef6c00', '#c62828', '#00838f', '#616161'];
+const TYPE_HELP = { 'イベント': '入札・会議など日付ごとの予定（1段目）', '工事': '工事・案件の期間バー（2段目）', '人': '出張・休みなど人の予定（3段目）' };
+let D = null, tab = 'ev', cur = new Date(), editing = null, busy = false;
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const h = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ymOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1);
+const md = s => Number(s.slice(5,7)) + '/' + Number(s.slice(8,10));
+const wd = s => WD[new Date(s.replace(/-/g,'/')).getDay()];
+
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 2200); }
+function fail(e) { busy = false; toast('エラー：' + (e && e.message ? e.message : e)); }
+
+function load() {
+  $('ymLbl').textContent = cur.getFullYear() + '年' + (cur.getMonth() + 1) + '月';
+  google.script.run.withSuccessHandler(d => { D = d; render(); }).withFailureHandler(fail).getEditData(KEY, ymOf(cur));
+}
+function moveMonth(n) { cur = new Date(cur.getFullYear(), cur.getMonth() + n, 1); $('main').innerHTML = '<div id="loading">読み込み中…</div>'; load(); }
+function setTab(t) { tab = t; ['Ev','Tk','Nt','St','Hp'].forEach(k => $('tab' + k).classList.toggle('on', t === k.toLowerCase())); $('fab').style.display = (t === 'st' || t === 'hp') ? 'none' : ''; render(); }
+
+function badge(name) {
+  if (!name) return '';
+  const b = D.badges.find(x => x.name === name) || { bg: '#455a64', fg: '#fff' };
+  return '<span class="chip" style="background:' + b.bg + ';color:' + b.fg + '">' + h(name) + '</span>';
+}
+
+/* ---------- 拠点・担当者の共通部品 ---------- */
+let siteFilter = '';
+/** 拠点で絞り込み（拠点が空のデータは全拠点共通として常に表示） */
+function siteOk(x) { return !siteFilter || !x.site || x.site === siteFilter; }
+function filterBar() {
+  if (!D.sites || !D.sites.length) return '';
+  return '<div class="fbar">拠点で絞り込み：<select onchange="siteFilter=this.value;render()"><option value="">すべて</option>' +
+    D.sites.map(s => '<option' + (siteFilter === s ? ' selected' : '') + '>' + h(s) + '</option>').join('') + '</select></div>';
+}
+function siteChip(x) { return x.site ? '<span class="type sitec">' + h(x.site) + '</span> ' : ''; }
+function siteField(id, val) {
+  if (!D.sites || !D.sites.length) return '';
+  return '<label>拠点</label><select id="' + id + '"><option value="">全拠点共通</option>' +
+    D.sites.map(s => '<option' + (val === s ? ' selected' : '') + '>' + h(s) + '</option>').join('') + '</select>';
+}
+/**
+ * 担当者の選択：登録済みの担当者を色つきボタンで並べ、タップで選ぶ（複数OK）。
+ * iPhoneのSafariは入力候補（datalist）がほぼ出ないため、ボタン方式にしている。
+ * 登録していない名前は下の欄に手入力。選んだ名前は隠し欄 id に「平安、山田」の形で入る。
+ */
+function ownerField(id, val) {
+  const owners = D.owners || [];
+  const sel = String(val || '').split(/[,、\s]+/).filter(String);
+  const known = owners.map(o => o.name);
+  const extra = sel.filter(n => known.indexOf(n) < 0).join('、');
+  return '<label>担当' + (owners.length ? '（タップで選ぶ・何人でもOK）' : '') + '</label>' +
+    (owners.length ? '<div class="ochips" id="' + id + 'C">' + owners.map(o =>
+      '<button type="button" class="ochip' + (sel.indexOf(o.name) >= 0 ? ' on' : '') + '" data-n="' + h(o.name) + '" style="--c:' + o.color +
+      '" onclick="togOwner(\'' + id + '\',this)"><i></i>' + h(o.name) + '</button>').join('') + '</div>' : '') +
+    '<input id="' + id + 'X" value="' + h(extra) + '" maxlength="50" oninput="syncOwner(\'' + id + '\')" placeholder="' +
+      (owners.length ? 'ほかの人は名前を入力' : '名前を入力（「設定→連携・マスタ」で担当者を登録するとボタンで選べます）') + '">' +
+    '<input type="hidden" id="' + id + '" value="' + h(sel.join('、')) + '">';
+}
+function togOwner(id, btn) { btn.classList.toggle('on'); syncOwner(id); }
+/** ボタンで選んだ名前（担当者の登録順）＋手入力の名前 を隠し欄にまとめる */
+function syncOwner(id) {
+  const names = Array.prototype.map.call(document.querySelectorAll('#' + id + 'C .ochip.on'), b => b.dataset.n);
+  String(val(id + 'X')).split(/[,、\s]+/).filter(String).forEach(n => { if (names.indexOf(n) < 0) names.push(n); });
+  $(id).value = names.join('、');
+}
+function val(id) { const el = $(id); return el ? el.value : ''; }
+
+function render() {
+  if (!D) return;
+  const main = $('main');
+  if (tab === 'st') { settingsView(); return; }
+  if (tab === 'hp') { manualView(); return; }
+  if (tab === 'nt') {
+    const list = D.notices.filter(siteOk);
+    if (!list.length) { main.innerHTML = filterBar() + '<div class="empty">お知らせはまだありません<br><small>TV画面の下に流れる一言メッセージ</small></div>'; return; }
+    main.innerHTML = filterBar() + '<div class="lg">' + list.map(n => {
+      const active = n.start <= D.today && (!n.end || n.end >= D.today);
+      const range = md(n.start) + '〜' + (n.end ? md(n.end) : '');
+      return '<div class="card' + (active ? '' : ' done') + '" onclick="openForm(\'' + h(n.id) + '\')">' +
+        '<div class="bar" style="background:' + (n.important ? '#c62828' : '#90a4ae') + '"></div><div class="body">' +
+        '<div class="t">' + (n.important ? '<span class="chip" style="background:#c62828">重要</span>' : '') + (n.image ? '🖼 ' : '') + h(n.text) + '</div>' +
+        '<div class="m">' + siteChip(n) + range + (active ? ' ／ 表示中' : n.start > D.today ? ' ／ 予約' : ' ／ 終了') + '</div></div></div>';
+    }).join('') + '</div>';
+    return;
+  }
+  if (tab === 'ev' && isPC) { calendarView(); return; }
+  if (tab === 'ev') {
+    const list = D.events.filter(siteOk);
+    if (!list.length) { main.innerHTML = filterBar() + '<div class="empty">この月の予定はまだありません</div>'; return; }
+    let html = filterBar(), lastDay = '';
+    list.forEach(e => {
+      if (e.start !== lastDay) { html += '<div class="day">' + md(e.start) + '（' + wd(e.start) + '）</div>'; lastDay = e.start; }
+      const range = e.end > e.start ? md(e.start) + '〜' + md(e.end) : md(e.start);
+      const mark = e.readonly ? '<span class="type calc">カレンダー</span> ' : e.recurring ? '<span class="type recc">繰り返し</span> ' : '';
+      html += '<div class="card" onclick="openForm(\'' + h(e.id) + '\')"><div class="bar" style="background:' + evColor(e) + '"></div>' +
+        '<div class="body"><div class="t">' + badge(e.badge) + h(e.title) + '</div>' +
+        '<div class="m">' + mark + '<span class="type">' + h(e.type) + '</span> ' + siteChip(e) + range + (e.time ? ' ' + h(e.time) : '') + (e.owner ? ' ／ ' + h(e.owner) : '') + '</div></div></div>';
+    });
+    main.innerHTML = html;
+  } else {
+    const list = D.tasks.filter(siteOk);
+    if (!list.length) { main.innerHTML = filterBar() + '<div class="empty">期限タスクはまだありません</div>'; return; }
+    main.innerHTML = filterBar() + '<div class="lg">' + list.map(t =>
+      '<div class="card' + (t.done ? ' done' : '') + '"><input type="checkbox" class="chk"' + (t.done ? ' checked' : '') +
+      ' onclick="event.stopPropagation();toggleTask(\'' + h(t.id) + '\',this.checked)">' +
+      '<div class="body" onclick="openForm(\'' + h(t.id) + '\')"><div class="t">' + h(t.title) + '</div>' +
+      '<div class="m">' + siteChip(t) + '期限 ' + md(t.due) + '（' + wd(t.due) + '）' + (t.owner ? ' ／ ' + h(t.owner) : '') + '</div></div></div>'
+    ).join('') + '</div>';
+  }
+}
+
+/* ---------- フォーム ---------- */
+function openForm(id, date) {
+  if (tab === 'ev') {
+    const e = id ? D.events.find(x => x.id === id) : null;
+    if (e && e.readonly) { calInfo(e); return; }
+    const defDate = date || (ymOf(cur) === D.today.slice(0, 7) ? D.today : ymOf(cur) + '-01');
+    if (e && e.recurring) {
+      const r = D.recurring.find(x => x.id === e.ruleId);
+      if (!r) return toast('繰り返し予定が見つかりません。再読み込みしてください');
+      editing = { id: r.id, isRule: true, occDate: e.start, pattern: r.pattern, dows: r.dows.replace(/,/g, ''), day: r.day, nth: r.nth,
+        start: r.from || e.start, end: r.to || '', type: r.type, badge: r.badge, time: r.time, title: r.title, owner: r.owner,
+        site: r.site, color: r.color, detail: '' };
+    } else {
+      editing = e ? Object.assign({ pattern: '' }, e) : { id: '', pattern: '', type: 'イベント', badge: '', start: defDate, end: defDate, time: '',
+        title: '', detail: '', owner: '', color: '', site: siteFilter, dows: WD[new Date(defDate.replace(/-/g, '/')).getDay()],
+        day: Number(defDate.slice(8, 10)), nth: Math.min(5, Math.ceil(Number(defDate.slice(8, 10)) / 7)) };
+    }
+    eventForm();
+  } else if (tab === 'nt') {
+    const n = id ? D.notices.find(x => x.id === id) : null;
+    editing = n ? Object.assign({}, n) : { id: '', text: '', start: D.today, end: '', important: false, site: siteFilter };
+    noticeForm();
+  } else {
+    const t = id ? D.tasks.find(x => x.id === id) : null;
+    editing = t ? Object.assign({}, t) : { id: '', title: '', due: D.today, owner: '', done: false, site: siteFilter };
+    taskForm();
+  }
+  $('ov').classList.add('on');
+}
+function closeForm() { $('ov').classList.remove('on'); editing = null; }
+
+/** Googleカレンダーの予定（読み取り専用）の詳細 */
+function calInfo(e) {
+  const range = e.end > e.start ? md(e.start) + '〜' + md(e.end) : md(e.start) + '（' + wd(e.start) + '）';
+  $('sheet').innerHTML = '<h2>' + h(e.title) + '</h2>' +
+    '<div class="m" style="font-size:14px;line-height:1.8">' + range + (e.time ? '　' + h(e.time) + '〜' : '') + '<br>' +
+    'カレンダー：' + h(e.source) + (e.site ? '　拠点：' + h(e.site) : '') + (e.detail ? '<br>' + h(e.detail) : '') + '</div>' +
+    '<div class="hint" style="margin-top:12px">Googleカレンダーから読み込んだ予定です。変更・削除はGoogleカレンダーで行ってください（最大15分ほどで反映）。</div>' +
+    '<div class="acts"><button class="cancel" onclick="closeForm()">閉じる</button></div>';
+  $('ov').classList.add('on');
+}
+
+function eventForm() {
+  const e = editing;
+  const recur = !!e.pattern;
+  const seg = D.types.map(t => '<button type="button" class="' + (e.type === t ? 'on' : '') + '" onclick="syncEv();editing.type=\'' + t + '\';eventForm()">' + t + '</button>').join('');
+  const opts = '<option value="">なし</option>' + D.badges.map(b => '<option' + (e.badge === b.name ? ' selected' : '') + '>' + h(b.name) + '</option>').join('');
+  const cols = COLORS.map(c => '<button type="button" class="' + (e.color === c ? 'on' : '') + '" style="background:' + (c || 'linear-gradient(135deg,#fff 45%,#c62828 50%,#fff 55%)') +
+    '" onclick="syncEv();editing.color=\'' + c + '\';eventForm()" title="' + (c ? c : '自動') + '"></button>').join('');
+  // 繰り返し：新規作成時と、繰り返し予定の編集時だけ選べる（通常の予定から繰り返しへの変換はしない）
+  const canRecur = !e.id || e.isRule;
+  const recurSel = canRecur ? '<label>繰り返し</label><select id="fPattern" onchange="var was=editing.pattern;syncEv();if(!was&&this.value)editing.end=\'\';eventForm()">' +
+    '<option value="">しない</option>' + D.patterns.map(p => '<option' + (e.pattern === p ? ' selected' : '') + '>' + p + '</option>').join('') + '</select>' : '';
+  let recurFields = '';
+  if (recur) {
+    const needDow = e.pattern === '毎週' || e.pattern === '毎月（第N曜日）';
+    recurFields =
+      (needDow ? '<label>曜日</label><div class="seg dows">' + WD.map(w => '<button type="button" class="' + (String(e.dows).indexOf(w) >= 0 ? 'on' : '') +
+        '" onclick="syncEv();toggleDow(\'' + w + '\')">' + w + '</button>').join('') + '</div>' : '') +
+      (e.pattern === '毎月（第N曜日）' ? '<label>第何週</label><select id="fNth">' + [1, 2, 3, 4, 5].map(n => '<option value="' + n + '"' +
+        (Number(e.nth) === n ? ' selected' : '') + '>' + (n === 5 ? '最終' : '第' + n) + '</option>').join('') + '</select>' : '') +
+      (e.pattern === '毎月（日付）' ? '<label>毎月何日</label><input type="number" id="fDay" min="1" max="31" value="' + h(e.day || '') +
+        '"><div class="hint">31日にすると、30日までの月は月末日に表示</div>' : '');
+  }
+  const dateFields = recur ?
+    '<div class="two"><div><label>開始日</label><input type="date" id="fStart" value="' + (e.start || '') + '"></div>' +
+    '<div><label>終了日（空欄＝ずっと）</label><input type="date" id="fEnd" value="' + (e.end || '') + '"></div></div>' :
+    '<div class="two"><div><label>開始日 *</label><input type="date" id="fStart" value="' + e.start + '" onchange="if(!$(\'fEnd\').value||$(\'fEnd\').value<this.value)$(\'fEnd\').value=this.value"></div>' +
+    '<div><label>終了日</label><input type="date" id="fEnd" value="' + e.end + '"></div></div>';
+  const acts = e.isRule ?
+    '<button class="del" onclick="delRule()">全回削除</button>' + (e.occDate ? '<button class="cancel" onclick="skipOcc()">' + md(e.occDate) + 'だけ休み</button>' : '') :
+    (e.id ? '<button class="del" onclick="delEvent()">削除</button>' : '');
+  $('sheet').innerHTML =
+    '<h2>' + (e.isRule ? '繰り返し予定を編集' : e.id ? '予定を編集' : '予定を追加') + '</h2>' +
+    (e.isRule ? '<div class="hint" style="margin-bottom:6px">変更は全ての回に反映されます</div>' : '') +
+    '<label>種別</label><div class="seg">' + seg + '</div><div class="hint">' + TYPE_HELP[e.type] + '</div>' +
+    '<label>件名 *</label><input id="fTitle" value="' + h(e.title) + '" maxlength="100" placeholder="例）国有地借用駐車場">' +
+    recurSel + recurFields + dateFields +
+    '<div class="two"><div><label>時刻</label><input type="time" id="fTime" value="' + toTimeInput(e.time) + '"></div>' +
+    '<div><label>バッジ</label><select id="fBadge">' + opts + '</select></div></div>' +
+    ownerField('fOwner', e.owner) + siteField('fSite', e.site) +
+    (recur ? '' : '<label>詳細メモ</label><textarea id="fDetail" maxlength="300">' + h(e.detail) + '</textarea>') +
+    '<label>色（自動＝' + (D.display['色分け'] === '担当者' ? '担当者の色' : 'バッジ色') + '）</label><div class="colors">' + cols + '</div>' +
+    '<div class="acts">' + acts + '<button class="cancel" onclick="closeForm()">キャンセル</button><button class="save" onclick="saveEv()">保存</button></div>';
+}
+function toggleDow(w) {
+  const s = String(editing.dows || '');
+  editing.dows = s.indexOf(w) >= 0 ? s.replace(w, '') : s + w;
+  eventForm();
+}
+function toTimeInput(t) { const m = String(t || '').match(/^(\d{1,2}):(\d{2})$/); return m ? pad(m[1]) + ':' + m[2] : ''; }
+function syncEv() {
+  if (!$('fTitle')) return;
+  Object.assign(editing, { title: val('fTitle'), start: val('fStart'), end: val('fEnd'), time: val('fTime'),
+    badge: val('fBadge'), owner: val('fOwner'), site: val('fSite') });
+  if ($('fDetail')) editing.detail = val('fDetail');
+  if ($('fPattern')) editing.pattern = val('fPattern');
+  if ($('fDay')) editing.day = val('fDay');
+  if ($('fNth')) editing.nth = val('fNth');
+}
+function done(msg) { return () => { busy = false; closeForm(); toast(msg); load(); }; }
+function saveEv() {
+  if (busy) return;
+  syncEv();
+  const e = editing;
+  if (!e.title.trim()) return toast('件名を入力してください');
+  if (e.time) e.time = e.time.replace(/^0(\d):/, '$1:');
+  if (e.pattern) {
+    if ((e.pattern === '毎週' || e.pattern === '毎月（第N曜日）') && !e.dows) return toast('曜日を選んでください');
+    busy = true;
+    google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveRecurring(KEY, {
+      id: e.isRule ? e.id : '', pattern: e.pattern, dows: e.dows, day: e.day, nth: e.nth, from: e.start, to: e.end,
+      type: e.type, badge: e.badge, time: e.time, title: e.title, owner: e.owner, site: e.site, color: e.color });
+    return;
+  }
+  if (!e.start) return toast('開始日を入力してください');
+  busy = true;
+  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveEvent(KEY, e);
+}
+function delEvent() {
+  if (busy || !confirm('「' + editing.title + '」を削除します。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteEvent(KEY, editing.id);
+}
+function delRule() {
+  if (busy || !confirm('繰り返し予定「' + editing.title + '」を、全ての回まとめて削除します。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteRecurring(KEY, editing.id);
+}
+function skipOcc() {
+  if (busy || !confirm(md(editing.occDate) + 'の「' + editing.title + '」だけを休みにします。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done(md(editing.occDate) + 'を休みにしました')).withFailureHandler(fail).skipRecurringDate(KEY, editing.id, editing.occDate);
+}
+
+function taskForm() {
+  const t = editing;
+  $('sheet').innerHTML =
+    '<h2>' + (t.id ? '期限タスクを編集' : '期限タスクを追加') + '</h2>' +
+    '<label>件名 *</label><input id="tTitle" value="' + h(t.title) + '" maxlength="100" placeholder="例）側溝清掃">' +
+    '<label>期限 *</label><input type="date" id="tDue" value="' + t.due + '">' +
+    ownerField('tOwner', t.owner) + siteField('tSite', t.site) +
+    '<div class="acts">' + (t.id ? '<button class="del" onclick="delTask()">削除</button>' : '') +
+    '<button class="cancel" onclick="closeForm()">キャンセル</button><button class="save" onclick="saveTk()">保存</button></div>';
+}
+function saveTk() {
+  if (busy) return;
+  Object.assign(editing, { title: val('tTitle'), due: val('tDue'), owner: val('tOwner'), site: val('tSite') });
+  if (!editing.title.trim()) return toast('件名を入力してください');
+  if (!editing.due) return toast('期限を入力してください');
+  busy = true;
+  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveTask(KEY, editing);
+}
+function delTask() {
+  if (busy || !confirm('「' + editing.title + '」を削除します。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteTask(KEY, editing.id);
+}
+function toggleTask(id, isDone) {
+  google.script.run.withSuccessHandler(() => { toast(isDone ? '完了にしました' : '未完了に戻しました'); load(); }).withFailureHandler(fail).setTaskDone(KEY, id, isDone);
+}
+
+/* ---------- お知らせ（テロップ） ---------- */
+function noticeForm() {
+  const n = editing;
+  $('sheet').innerHTML =
+    '<h2>' + (n.id ? 'お知らせを編集' : 'お知らせを追加') + '</h2>' +
+    '<label>内容 *</label><textarea id="nText" maxlength="200" placeholder="例）本日17時から安全会議">' + h(n.text) + '</textarea>' +
+    '<div class="two"><div><label>表示開始 *</label><input type="date" id="nStart" value="' + n.start + '"></div>' +
+    '<div><label>表示終了</label><input type="date" id="nEnd" value="' + (n.end || '') + '"></div></div>' +
+    '<div class="hint">終了日を空欄にすると、削除するまでずっと流れる</div>' + siteField('nSite', n.site) +
+    '<label>写真・図面・短い動画（TVに大きく表示）</label>' + photoField(n) +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:15px;color:var(--text)"><input type="checkbox" id="nImp" style="width:22px;height:22px"' + (n.important ? ' checked' : '') + '>重要（赤字で表示）</label>' +
+    '<div class="acts">' + (n.id ? '<button class="del" onclick="delNotice()">削除</button>' : '') +
+    '<button class="cancel" onclick="closeForm()">キャンセル</button><button class="save" onclick="saveNt()">保存</button></div>';
+}
+function syncNt() {
+  if (!$('nText')) return;
+  Object.assign(editing, { text: val('nText'), start: val('nStart'), end: val('nEnd'), important: $('nImp').checked, site: val('nSite') });
+}
+/** 写真欄：新しい写真（imageData）→ 既存の写真 → なし の順に表示 */
+function photoField(n) {
+  const src = n.imageData || (n.image && !n.removeImage ? (photoCacheIn[n.image] || '') : '');
+  if (n.image && !n.removeImage && !n.imageData && !photoCacheIn[n.image]) {
+    google.script.run.withSuccessHandler(url => { photoCacheIn[n.image] = url; if (editing === n) { syncNt(); noticeForm(); } }).getNoticeImage(n.image);
+  }
+  const has = n.imageData || (n.image && !n.removeImage);
+  const isVid = /^data:video\//.test(src);
+  return (has ? '<div style="margin:4px 0 6px">' + (src ? (isVid ?
+      '<video src="' + src + '" controls muted playsinline style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--line)"></video>' :
+      '<img src="' + src + '" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--line)">') :
+      '<div class="hint">読み込み中…</div>') + '</div>' : '') +
+    '<div class="two"><div><label class="mini" style="display:block;text-align:center;padding:9px;cursor:pointer;margin:0">' + (has ? '選び直す' : '写真・動画を選ぶ') +
+    '<input type="file" accept="image/*,video/mp4,video/webm,video/quicktime" style="display:none" onchange="pickPhoto(this)"></label></div>' +
+    (has ? '<div><button type="button" class="mini" style="width:100%;padding:9px;border-color:#c62828;color:#c62828" onclick="removePhoto()">外す</button></div>' : '<div></div>') + '</div>' +
+    '<div class="hint">動画は60秒・10MBまで（30秒くらいが目安）。iPhoneは「設定→カメラ→フォーマット→互換性優先」で撮るとTVで再生できます</div>';
+}
+const photoCacheIn = {};
+/** 選んだ写真を長辺1600pxのJPEGに縮小（通信量とドライブ容量を抑える） */
+function pickPhoto(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  if (/^video\//.test(f.type) || /\.(mp4|mov|webm)$/i.test(f.name)) return pickVideo(f);
+  if (!/^image\//.test(f.type)) return toast('写真か動画を選んでください');
+  toast('写真を準備中…');
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1600, r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      syncNt(); editing.imageData = c.toDataURL('image/jpeg', 0.82); editing.removeImage = false; noticeForm();
+    };
+    img.onerror = () => toast('この画像は読み込めませんでした（JPEG・PNGを選んでください）');
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+/** 短い動画：縮小はできないので、大きさ・長さを確かめてからそのまま送る */
+function pickVideo(f) {
+  const MAX_MB = 10, MAX_SEC = 60;
+  if (f.size > MAX_MB * 1024 * 1024) return toast('動画が大きすぎます（' + (f.size / 1048576).toFixed(1) + 'MB）。' + MAX_MB + 'MBまでにしてください');
+  const url = URL.createObjectURL(f);
+  const v = document.createElement('video');
+  v.preload = 'metadata'; v.muted = true;
+  v.onloadedmetadata = () => {
+    URL.revokeObjectURL(url);
+    if (v.duration > MAX_SEC + 1) return toast('動画が長すぎます（' + Math.round(v.duration) + '秒）。' + MAX_SEC + '秒までにしてください');
+    toast('動画を準備中…');
+    const rd = new FileReader();
+    rd.onload = () => {
+      let data = String(rd.result);
+      // 端末によって種類が付かないことがあるので mp4 として扱う
+      if (!/^data:video\//.test(data)) data = data.replace(/^data:[^;,]*;/, 'data:video/mp4;');
+      syncNt(); editing.imageData = data; editing.removeImage = false; noticeForm();
+    };
+    rd.readAsDataURL(f);
+  };
+  v.onerror = () => { URL.revokeObjectURL(url); toast('この動画は読み込めませんでした（MP4を選んでください）'); };
+  v.src = url;
+}
+function removePhoto() { syncNt(); editing.imageData = ''; editing.removeImage = true; noticeForm(); }
+function saveNt() {
+  if (busy) return;
+  syncNt();
+  if (!editing.text.trim()) return toast('内容を入力してください');
+  if (!editing.start) return toast('表示開始日を入力してください');
+  if (editing.end && editing.end < editing.start) return toast('終了日が開始日より前です');
+  busy = true;
+  if (editing.imageData) toast(/^data:video/.test(editing.imageData) ? '動画を保存中…（少し時間がかかります）' : '写真を保存中…');
+  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveNotice(KEY, editing);
+}
+function delNotice() {
+  if (busy || !confirm('このお知らせを削除します。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteNotice(KEY, editing.id);
+}
+
+/* ---------- 表示設定（TV画面の見た目） ---------- */
+const THEME_SW = {
+  'ダーク': { bg: '#0e1621', fg: '#eef3f8' }, 'ライト': { bg: '#e6ebf1', fg: '#14202e' },
+  'ハイコントラスト': { bg: '#000000', fg: '#ffff00' }, 'カスタム': { bg: 'linear-gradient(135deg,#1565c0,#2e7d32,#ef6c00)', fg: '#fff' }
+};
+const CUSTOM_KEYS = [['カスタム_背景色','背景'],['カスタム_パネル色','パネル'],['カスタム_文字色','文字'],['カスタム_補助文字色','補助文字'],['カスタム_罫線色','罫線'],['カスタム_強調色','強調（時刻・今日）']];
+let ST = null;
+/** 気象庁の府県予報区（主なもの）。一覧にない地域は設定シートに6桁コードを直接入力 */
+const WX_AREAS = [['016000','北海道 石狩・空知・後志'],['040000','宮城県'],['130000','東京都'],['140000','神奈川県'],['230000','愛知県'],
+  ['260000','京都府'],['270000','大阪府'],['280000','兵庫県'],['340000','広島県'],['400000','福岡県'],['430000','熊本県'],['460100','鹿児島県'],
+  ['471000','沖縄本島地方'],['472000','大東島地方'],['473000','宮古島地方'],['474000','八重山地方']];
+function wxOptions(cur) {
+  const c = ('000000' + String(cur || '')).slice(-6);
+  let list = WX_AREAS.slice();
+  if (cur && !list.some(a => a[0] === c)) list.unshift([c, 'コード ' + c + '（設定シートで指定）']);
+  return list.map(a => '<option value="' + a[0] + '"' + (a[0] === c ? ' selected' : '') + '>' + h(a[1]) + '</option>').join('');
+}
+/* 設定画面はカテゴリごとに分ける（ST＝保存前の表示設定。カテゴリを切り替えても保持） */
+let stCat = 'look';
+const ST_CATS = [['look', '🎨', '見た目'], ['screen', '🖥️', '画面の配置'], ['info', '☀️', '天気・テロップ・QR'],
+  ['media', '🎬', '写真・YouTube'], ['sound', '🔔', '音'], ['burn', '🌙', '夜間・メンテ'], ['notify', '✉️', '通知'], ['master', '👥', '連携・マスタ']];
+const SIDE_ITEMS = [['右欄_今日の予定', '今日の予定'], ['右欄_明日の予定', '明日の予定'], ['右欄_期限タスク', '期限タスク'], ['右欄_その後の予定', 'その後の予定']];
+
+function segBtns(key, values, labels) {
+  return '<div class="seg">' + values.map((v, i) => '<button type="button" class="' + (String(ST[key]) === String(v) ? 'on' : '') +
+    '" onclick="syncSt();ST[\'' + key + '\']=\'' + v + '\';settingsView()">' + (labels ? labels[i] : v) + '</button>').join('') + '</div>';
+}
+function panel(title, body, sub) {
+  return '<div class="panel"><h3>' + title + (sub ? ' <small class="psub">' + sub + '</small>' : '') + '</h3>' + body + '</div>';
+}
+/** TV画面の配置の見本（右欄の出し入れ・段の並びがひと目でわかるように） */
+function layoutPreview() {
+  const shown = SIDE_ITEMS.filter(x => ST[x[0]] !== 'OFF');
+  const top = ST['段の並び'] === '予定が上' ? ['予定', '工事・案件'] : ['工事・案件', '予定'];
+  return '<div class="lp"><div class="lp-board"><div class="lp-l main">' + top[0] + '</div><div class="lp-l">' + top[1] + '</div><div class="lp-l">人・出張' + (ST['名前マグネット'] !== 'OFF' ? ' <span class="lpm">名前</span>' : '') + '</div></div>' +
+    (shown.length ? '<div class="lp-side' + (shown.length <= 2 ? ' slim' : '') + '">' + shown.map(x => '<div>' + x[1] + '</div>').join('') + '</div>' : '') + '</div>' +
+    '<div class="hint" style="text-align:center">' + (shown.length ? '' : '右欄なし：予定表を横いっぱいに表示') + '</div>';
+}
+
+function settingsView() {
+  if (!ST) ST = Object.assign({}, D.display);
+  const hex = v => /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? v : '#000000';
+  const nav = '<div class="stnav">' + ST_CATS.map(c => '<button class="' + (stCat === c[0] ? 'on' : '') + '" onclick="syncSt();stCat=\'' + c[0] + '\';settingsView()">' +
+    '<span class="ic">' + c[1] + '</span>' + c[2] + '</button>').join('') + '</div>';
+  let body = '';
+  if (stCat === 'look') {
+    const themes = Object.keys(THEME_SW).map(t => '<button class="theme' + (ST['テーマ'] === t ? ' on' : '') + '" onclick="syncSt();ST[\'テーマ\']=\'' + t + '\';settingsView()">' +
+      '<div class="sw" style="background:' + THEME_SW[t].bg + ';color:' + THEME_SW[t].fg + '">予定表</div>' + t + '</button>').join('');
+    body = panel('配色テーマ', '<div class="seg">' + themes + '</div><div class="hint">明るい事務所なら「ライト」、遠くから見るなら「ハイコントラスト」</div>') +
+      (ST['テーマ'] === 'カスタム' ? panel('カスタム配色', '<div class="grid2">' +
+        CUSTOM_KEYS.map(([k, l]) => '<div><label>' + l + '</label><input type="color" data-k="' + k + '" value="' + hex(ST[k]) + '"></div>').join('') + '</div>') : '') +
+      panel('文字サイズ', segBtns('文字サイズ', ['標準', '大', '特大'])) +
+      panel('タイトル', '<label>表示タイトル</label><input id="sTitle" value="' + h(ST['表示タイトル']) + '" maxlength="40">' +
+        '<label>会社名（空欄なら出さない）</label><input id="sCompany" value="' + h(ST['会社名']) + '" maxlength="40">');
+  } else if (stCat === 'screen') {
+    body = panel('TV画面の配置', layoutPreview() +
+        '<label>表示モード</label>' + segBtns('表示モード', ['月', '2週間', '人の動き'], ['1か月', '2週間', '人の動き']) +
+        '<div class="hint">2週間：大きく表示／人の動き：担当者ごとに1行</div>' +
+        '<label>段の並び（上の段が大きく表示されます）</label>' + segBtns('段の並び', ['工事・案件が上', '予定が上']) +
+        '<label>人・出張に名前マグネット</label>' + segBtns('名前マグネット', ['ON', 'OFF'], ['表示する', '表示しない']) +
+        '<label>右欄に出すもの</label><div class="chips">' + SIDE_ITEMS.map(x => '<button type="button" class="chip2' + (ST[x[0]] !== 'OFF' ? ' on' : '') +
+          '" onclick="syncSt();ST[\'' + x[0] + '\']=ST[\'' + x[0] + '\']===\'OFF\'?\'ON\':\'OFF\';settingsView()">' + (ST[x[0]] !== 'OFF' ? '✓ ' : '') + x[1] + '</button>').join('') + '</div>' +
+        '<div class="hint">消した分だけ予定表が広くなります。全部消すと横いっぱい</div>') +
+      panel('色分け', segBtns('色分け', ['種別・バッジ', '担当者']) +
+        '<div class="hint">「担当者」は担当者ごとの色で塗る（色は「連携・マスタ」で登録）' + (D.owners && D.owners.length ? '' : '<br>※担当者がまだ登録されていません') + '</div>') +
+      panel('表示の動き', '<label>今月／来月の切替（秒・0で切替なし）</label><input type="number" id="sRotate" min="0" max="600" value="' + h(ST['月切替(秒)']) + '">');
+  } else if (stCat === 'info') {
+    body = wxStatusHtml() + panel('天気予報', segBtns('天気_表示', ['ON', 'OFF'], ['表示する', '表示しない']) +
+        '<label>地域</label><select id="sWxCode">' + wxOptions(ST['天気_地域コード']) + '</select>' +
+        '<div class="two"><div><label>画面に出す地点名</label><input id="sWxName" value="' + h(ST['天気_地点名']) + '" maxlength="20"></div>' +
+        '<div><label>表示日数</label><select id="sWxDays">' + [3, 4, 5].map(n => '<option' + (Number(ST['天気_日数']) === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div></div>' +
+        '<label>地域内の番号（0＝最初。離島などは1以降）</label><input type="number" id="sWxIdx" min="0" max="20" value="' + h(ST['天気_エリア番号']) + '">' +
+        '<div class="hint">気象庁の予報を1時間ごとに取得</div>') +
+      panel('お知らせテロップ', segBtns('テロップ表示', ['ON', 'OFF'], ['表示する', '表示しない']) +
+        '<label>流れる速さ</label>' + segBtns('テロップ速度', ['遅い', '標準', '速い']) +
+        '<div class="hint">お知らせの追加は「お知らせ」タブから</div>') +
+      panel('スマホ入力用QRコード', segBtns('QRコード', ['ON', 'OFF'], ['表示する', '表示しない']) +
+        '<label>QRコードの横の説明</label><input id="sQrTxt" value="' + h(ST['QRコード_説明']) + '" maxlength="40" placeholder="スマホで読み取ると予定を入力できます">' +
+        '<div class="hint">TV画面の右上（時計の左）に出ます。読み取ると、この入力画面が開きます。<br>⚠ TVが来客から見える場所なら「表示しない」に（だれでも入力できてしまうため）</div>');
+  } else if (stCat === 'media') {
+    const yt = String(ST['YouTube_URL'] || '').trim();
+    body = panel('写真・図面・動画', '<div class="two"><div><label>写真を出す間隔（分）</label><input type="number" id="sPhInt" min="1" max="120" value="' + h(ST['写真表示_間隔(分)']) + '"></div>' +
+        '<div><label>1枚の表示（秒）</label><input type="number" id="sPhSec" min="5" max="120" value="' + h(ST['写真表示_秒']) + '"></div></div>' +
+        '<div class="hint">写真・動画は「お知らせ」に付けるとTVに出ます。動画は最後まで流れます</div>') +
+      panel('YouTube動画（全画面）', '<label>YouTubeのURL（動画または再生リスト）</label><input id="sYtUrl" value="' + h(yt) + '" placeholder="https://www.youtube.com/watch?v=…">' +
+        '<div class="two"><div><label>何分おきに</label><input type="number" id="sYtInt" min="0" max="1440" value="' + h(ST['YouTube_間隔(分)']) + '"></div>' +
+        '<div><label>何分間流す</label><input type="number" id="sYtLen" min="1" max="120" value="' + h(ST['YouTube_再生(分)']) + '"></div></div>' +
+        '<label>この時間はずっと流す（例 12:00-13:00）</label><input id="sYtRange" value="' + h(ST['YouTube_時間帯']) + '" placeholder="空欄でなし" maxlength="11">' +
+        '<div class="hint">予定表の上に全画面で流します（焼付防止にも効果あり）。URLが空欄なら流しません。「何分おきに」を0にすると、時間帯だけ流します。<br>景色・環境映像の長い動画や再生リストがおすすめ（埋め込み禁止の動画は流れません）</div>' +
+        (yt ? '<button type="button" class="mini" style="margin-top:8px" onclick="window.open(\'' + h(yt).replace(/'/g, '') + '\',\'_blank\')">YouTubeで開いて確認</button>' : '')) +
+      panel('BGM（YouTubeの音だけ流す）', '<label>YouTubeのURL（動画または再生リスト）</label><input id="sBgmUrl" value="' + h(ST['BGM_URL']) + '" placeholder="空欄ならBGMなし">' +
+        '<div class="two"><div><label>音量（0〜100）</label><input type="number" id="sBgmVol" min="0" max="100" value="' + h(ST['BGM_音量']) + '"></div>' +
+        '<div><label>流す時間（例 8:00-17:00）</label><input id="sBgmRange" value="' + h(ST['BGM_時間帯']) + '" placeholder="空欄でずっと" maxlength="11"></div></div>' +
+        '<div class="hint">右欄に小さなプレーヤーが出ます（YouTubeの決まりで完全には隠せません）。<br>チャイム・動画・YouTube表示の間は自動で一時停止。<br>⚠「著作権フリー」「商用利用OK」のBGMを選んでください。TVは画面を1回クリックすると音が出ます</div>');
+  } else if (stCat === 'sound') {
+    body = panel('読み上げ・チャイム', '<div class="two"><div><label>朝の読み上げ（時刻）</label><input type="time" id="sRead" value="' + toTimeInput(ST['朝の読み上げ時刻']) + '"></div>' +
+        '<div><label>重要お知らせのチャイム</label><select id="sChime"><option value="ON"' + (ST['お知らせチャイム'] !== 'OFF' ? ' selected' : '') + '>鳴らす</option>' +
+        '<option value="OFF"' + (ST['お知らせチャイム'] === 'OFF' ? ' selected' : '') + '>鳴らさない</option></select></div></div>' +
+        '<div class="hint">読み上げ時刻を消すと読み上げしない。音はTVのスピーカーから</div>') +
+      panel('動画の音', '<label>写真・お知らせの動画</label>' + segBtns('動画の音', ['OFF', 'ON'], ['音なし', '音あり']) +
+        '<label>YouTube動画（全画面）</label>' + segBtns('YouTube_音', ['OFF', 'ON'], ['音なし', '音あり']) +
+        '<div class="hint">BGMの音量は「写真・YouTube」で設定</div>');
+  } else if (stCat === 'burn') {
+    body = panel('夜は画面を暗く', '<div class="two"><div><label>開始</label><input type="time" id="sDimS" value="' + toTimeInput(ST['夜間暗転開始']) + '"></div>' +
+        '<div><label>終了</label><input type="time" id="sDimE" value="' + toTimeInput(ST['夜間暗転終了']) + '"></div></div>' +
+        '<div class="hint">誰もいない時間は暗くするのが一番の焼付防止。暗くしない場合は時刻を消して空欄に</div>') +
+      panel('画面を少しずつずらす', segBtns('焼付防止_ずらし', ['ON', 'OFF'], ['する', 'しない']) +
+        '<div class="hint">5分ごとに画面全体を数ピクセル動かします。見た目はほとんど変わりません</div>') +
+      panel('焼き付きをもっと防ぐには', '<div class="hint">「写真・YouTube」でYouTube動画を決まった時間に流すと、画面が入れ替わり焼き付きにくくなります</div>') +
+      panel('データの整理', '<label>終わった予定を何か月後に「予定_過去」へ移すか</label><input type="number" id="sArc" min="1" max="24" value="' + h(ST['アーカイブ月数']) + '">' +
+        '<div class="hint">移す作業はスプレッドシートのメニューから（今すぐ／毎月1日に自動）</div>');
+  } else if (stCat === 'notify') {
+    body = notifySection();
+  } else {
+    body = calStatusHtml() + masterSection();
+  }
+  const needSave = ['look', 'screen', 'info', 'media', 'sound', 'burn'].indexOf(stCat) >= 0;
+  $('main').innerHTML = nav + '<div class="stbody">' + (needSave ? '<div class="sg">' + body + '</div>' : body) + '</div>' +
+    (needSave ? '<div class="savebar"><span>保存すると数分でTVに反映</span><button class="save" onclick="saveSt()">保存</button></div>' : '');
+}
+/** 画面に出ている入力欄だけ ST に取り込む（カテゴリごとに出る欄が違うため） */
+function syncSt() {
+  if (!ST) return;
+  const take = (id, key) => { const el = $(id); if (el) ST[key] = el.value; };
+  take('sTitle', '表示タイトル'); take('sCompany', '会社名'); take('sRotate', '月切替(秒)');
+  take('sDimS', '夜間暗転開始'); take('sDimE', '夜間暗転終了'); take('sArc', 'アーカイブ月数');
+  take('sWxName', '天気_地点名'); take('sWxDays', '天気_日数'); take('sWxCode', '天気_地域コード'); take('sWxIdx', '天気_エリア番号');
+  take('sQrTxt', 'QRコード_説明'); take('sYtUrl', 'YouTube_URL'); take('sYtInt', 'YouTube_間隔(分)'); take('sYtLen', 'YouTube_再生(分)'); take('sYtRange', 'YouTube_時間帯');
+  take('sBgmUrl', 'BGM_URL'); take('sBgmVol', 'BGM_音量'); take('sBgmRange', 'BGM_時間帯');
+  take('sRead', '朝の読み上げ時刻'); take('sChime', 'お知らせチャイム'); take('sPhInt', '写真表示_間隔(分)'); take('sPhSec', '写真表示_秒');
+  document.querySelectorAll('input[data-k]').forEach(i => ST[i.dataset.k] = i.value);
+}
+function saveSt() {
+  if (busy) return;
+  syncSt();
+  busy = true;
+  google.script.run.withSuccessHandler(() => { busy = false; ST = null; toast('表示設定を保存しました'); load(); })
+    .withFailureHandler(fail).saveDisplaySettings(KEY, ST);
+}
+
+/* ---------- 通知（TV稼働チェック・前日通知） ---------- */
+let NS = null, nsLoading = false;
+function notifySection() {
+  if (!NS) {
+    if (!nsLoading) {
+      nsLoading = true;
+      google.script.run.withSuccessHandler(o => { NS = o; nsLoading = false; if (tab === 'st') { syncSt(); settingsView(); } })
+        .withFailureHandler(e => { nsLoading = false; fail(e); }).getNotifySettings(KEY);
+    }
+    return '<div class="msec"><h2>通知</h2><div class="hint">読み込み中…</div></div>';
+  }
+  const n = NS;
+  const sel = (id, v, on, off) => '<select id="' + id + '"><option value="ON"' + (v === 'ON' ? ' selected' : '') + '>' + on + '</option>' +
+    '<option value="OFF"' + (v !== 'ON' ? ' selected' : '') + '>' + off + '</option></select>';
+  const tv = (n.heartbeats || []).length ? n.heartbeats.map(b => '<div class="mrow" style="cursor:default"><span class="sw" style="background:' +
+      (b.minutes != null && b.minutes < 30 ? '#2e7d32' : '#c62828') + '"></span><span class="nm">' + h(b.name) + '</span><span class="sb">最終 ' + h(b.last) +
+      (b.alerted ? '（停止中）' : '') + '</span><button class="mini" style="padding:2px 8px" onclick="resetHb(\'' + h(b.name).replace(/'/g, "\\'") + '\')">消す</button></div>').join('') :
+    '<div class="hint">TV画面を開くと、ここに表示されます</div>';
+  return '<div class="msec"><h2>通知 <small>保存ボタンで反映</small></h2><div class="sg">' +
+    '<div class="panel"><h3>TVが止まったらメール</h3>' +
+    '<label>通知先メール（複数はカンマ区切り）</label><input id="nMail" value="' + h(n['通知先メール']) + '" placeholder="例）info@example.com">' +
+    '<div class="two"><div><label>TV稼働チェック</label>' + sel('nHb', n['稼働チェック'], 'する', 'しない') + '</div>' +
+    '<div><label>何分止まったら</label><input type="number" id="nHbMin" min="10" max="720" value="' + h(n['稼働チェック_分']) + '"></div></div>' +
+    '<div class="two"><div><label>見張る時間（開始）</label><input type="time" id="nHbS" value="' + toTimeInput(n['監視開始']) + '"></div>' +
+    '<div><label>（終了）</label><input type="time" id="nHbE" value="' + toTimeInput(n['監視終了']) + '"></div></div>' +
+    '<label>土日も見張る</label>' + sel('nHbW', n['土日も監視'], '見張る', '見張らない') +
+    '<label>TVの状態</label>' + tv + '</div>' +
+    '<div class="panel"><h3>明日の予定を送る</h3>' +
+    '<div class="two"><div><label>前日通知</label>' + sel('nDay', n['前日通知'], '送る', '送らない') + '</div>' +
+    '<div><label>送る時刻</label><select id="nDayH">' + Array.from({ length: 24 }, (_, i) => '<option value="' + i + '"' + (Number(n['前日通知_時刻']) === i ? ' selected' : '') +
+      '>' + i + '時ごろ</option>').join('') + '</select></div></div>' +
+    '<div class="hint">送り先：上のメール／Chatwork／LINE WORKS など（設定したもの全部）</div>' +
+    '<label>Chatwork APIトークン</label><input id="nCwT" type="password" autocomplete="off" placeholder="' + (n.cwTokenSet ? '設定済み（変えるときだけ入力）' : '未設定') + '">' +
+    '<label>Chatwork ルームID</label><input id="nCwR" value="' + h(n.cwRoom) + '" placeholder="例）123456789">' +
+    (n.cwTokenSet ? '<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="nCwX" style="width:18px;height:18px">Chatworkを解除</label>' : '') +
+    '<label>LINE WORKS／Googleチャット等のWebhook URL</label><input id="nWh" type="password" autocomplete="off" placeholder="' +
+      (n.webhookSet ? '設定済み：' + h(n.webhookKind) + '（変えるときだけ入力）' : '未設定') + '">' +
+    (n.webhookSet ? '<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="nWhX" style="width:18px;height:18px">Webhookを解除</label>' : '') +
+    '</div></div><div class="acts st"><button class="cancel" onclick="testNotify()">テスト送信</button><button class="save" onclick="saveNotify()">通知設定を保存</button></div></div>';
+}
+function saveNotify() {
+  if (busy) return;
+  const o = { '通知先メール': val('nMail'), '稼働チェック': val('nHb'), '稼働チェック_分': val('nHbMin'), '監視開始': val('nHbS'), '監視終了': val('nHbE'),
+    '土日も監視': val('nHbW'), '前日通知': val('nDay'), '前日通知_時刻': val('nDayH'),
+    cwToken: val('nCwT').trim(), cwRoom: val('nCwR'), cwClear: $('nCwX') ? $('nCwX').checked : false,
+    webhookUrl: val('nWh').trim(), webhookClear: $('nWhX') ? $('nWhX').checked : false };
+  busy = true;
+  syncSt();
+  google.script.run.withSuccessHandler(r => { busy = false; NS = r; toast('通知設定を保存しました'); settingsView(); })
+    .withFailureHandler(fail).saveNotifySettings(KEY, o);
+}
+function testNotify() {
+  toast('送信中…（先に「保存」してから試してください）');
+  google.script.run.withSuccessHandler(lines => {
+    $('sheet').innerHTML = '<h2>テスト送信の結果</h2><div style="font-size:14px;line-height:1.9">' + lines.map(h).join('<br>') + '</div>' +
+      '<div class="acts"><button class="cancel" onclick="closeForm()">閉じる</button></div>';
+    $('ov').classList.add('on');
+  }).withFailureHandler(fail).sendTestNotice(KEY);
+}
+function resetHb(name) {
+  if (!confirm('「' + name + '」をTVの一覧から消します（撤去したTV用）。よろしいですか？')) return;
+  google.script.run.withSuccessHandler(list => { NS.heartbeats = list; syncSt(); settingsView(); }).withFailureHandler(fail).resetHeartbeat(KEY, name);
+}
+
+/* ---------- 使い方（マニュアル） ---------- */
+const MANUAL = [
+  ['予定を入れる', ['下の「＋追加」を押す', '件名と日にちを入れて「保存」', '何日もかかる工事は「工事」を選ぶ']],
+  ['予定を直す・消す', ['予定を押す', '直して「保存」、または「削除」']],
+  ['毎週の予定（朝礼など）', ['「＋追加」→「繰り返し」を選ぶ', '曜日を押して「保存」', '1回だけ休む日は、その日の予定を押して「○日だけ休み」']],
+  ['期限のある仕事', ['「期限」タブ →「＋追加」', '終わったら左の□にチェック']],
+  ['お知らせ・写真・動画', ['「お知らせ」タブ →「＋追加」', '「重要」にするとチャイムが鳴る', '写真や短い動画（60秒まで）を付けるとTVに大きく出る']],
+  ['だれがどこにいるか見たい', ['予定の「担当」で名前のボタンを押す（何人でもOK）', 'TVの「人・出張」に名前の札が付く', '「設定」→「画面の配置」→「人の動き」で人ごとの表示も']],
+  ['スマホで入力するには', ['TVの右上のQRコードをスマホのカメラで読む', '出てきた画面をホーム画面に追加しておくと便利']],
+  ['TVの見た目を変える', ['「設定」→「見た目」で色・文字の大きさ', '下の「保存」を押す', '数分でTVが切り替わる']],
+  ['予定表をもっと広く', ['「設定」→「画面の配置」', '「右欄に出すもの」で、いらない欄を消す']],
+  ['画面の焼き付きが心配', ['「設定」→「夜間・メンテ」で夜は暗くする', '「設定」→「写真・YouTube」で動画を流すのも効果あり']],
+  ['BGMを流したい', ['「設定」→「写真・YouTube」→「BGM」', 'YouTubeのURLと音量を入れて「保存」', '著作権フリー・商用OKの曲を選ぶ']],
+  ['TVが止まったとき', ['TVのリモコンで電源を入れ直す', 'それでもダメならブラウザを開き直す', '直らないときは管理者へ']],
+  ['音が出ないとき', ['TVの画面を1回クリック（リモコンの決定）', 'TVの音量を確認']]
+];
+const TIPS = ['パソコンで開くと、カレンダーで日付を押して追加できます', '担当者と色は「設定」→「連携・マスタ」で登録',
+  'Googleカレンダーの予定も「設定」→「連携・マスタ」でTVに出せます'];
+function manualView() {
+  $('main').innerHTML = '<div class="lg">' + MANUAL.map((m, i) => '<details class="panel man"' + (i === 0 ? ' open' : '') + '><summary>' + h(m[0]) + '</summary><ol>' +
+    m[1].map(x => '<li>' + h(x) + '</li>').join('') + '</ol></details>').join('') + '</div>' +
+    '<div class="panel" style="margin-top:12px;background:#fffde7;border-color:#fff59d"><h3>💡 Tips</h3><ul class="tips">' + TIPS.map(t => '<li>' + h(t) + '</li>').join('') + '</ul></div>';
+}
+
+/* ---------- 連携・マスタ（カレンダー連携・拠点・担当者） ---------- */
+const PALETTE = ['#e65100', '#2e7d32', '#1565c0', '#6a1b9a', '#c62828', '#00838f', '#ad1457', '#5d4037', '#455a64', '#f9a825'];
+function masterSection() {
+  const cals = D.calLinks || [], sites = D.siteList || [], owners = D.owners || [];
+  const empty = t => '<div class="hint" style="padding:6px 4px">' + t + '</div>';
+  return '<div class="msec"><h2>連携・マスタ <small>変更するとすぐ保存されます</small></h2><div class="sg">' +
+    '<div class="panel"><div class="mhead"><h3>Googleカレンダー連携</h3><span><button class="mini" onclick="calTest()">接続テスト</button> ' +
+    '<button class="mini" onclick="masterForm(\'cal\')">＋追加</button></span></div>' +
+    (cals.length ? cals.map((c, i) => '<div class="mrow' + (c.enabled ? '' : ' off') + '" onclick="masterForm(\'cal\',' + i + ')">' +
+      '<span class="sw" style="background:' + (c.color || '#90a4ae') + '"></span><span class="nm">' + h(c.name) + '</span>' +
+      '<span class="sb">' + (c.site ? h(c.site) + '／' : '') + (c.enabled ? '表示中' : '停止中') + '</span></div>').join('') :
+      empty('登録すると、Googleカレンダーの予定がTVと入力画面に表示されます（読み取りのみ）')) + '</div>' +
+    '<div class="panel"><div class="mhead"><h3>担当者</h3><button class="mini" onclick="masterForm(\'owner\')">＋追加</button></div>' +
+    (owners.length ? owners.map((o, i) => '<div class="mrow" onclick="masterForm(\'owner\',' + i + ')"><span class="sw" style="background:' + o.color + '"></span>' +
+      '<span class="nm">' + h(o.name) + '</span></div>').join('') : empty('担当欄の候補と、色分け（担当者）の色になります')) + '</div>' +
+    '<div class="panel"><div class="mhead"><h3>拠点</h3><button class="mini" onclick="masterForm(\'site\')">＋追加</button></div>' +
+    (sites.length ? sites.map((x, i) => '<div class="mrow" onclick="masterForm(\'site\',' + i + ')"><span class="nm">' + h(x.name) + '</span>' +
+      '<span class="sb">' + (x.wxCode ? '天気 ' + h(x.wxName || x.wxCode) : '天気は共通') + '</span></div>').join('') :
+      empty('TVを複数台置くときに使います。拠点ごとのTV用URLはスプレッドシートのメニュー「表示・入力URLを確認」に出ます')) + '</div>' +
+    '</div></div>';
+}
+
+function masterForm(kind, i) {
+  if (kind === 'cal') {
+    const c = i != null ? D.calLinks[i] : null;
+    editing = { kind: kind, origId: c ? c.id : '', id: c ? c.id : '', name: c ? c.name : '', site: c ? c.site : '', color: c ? c.color : '#00838f',
+      singleType: c ? c.singleType : 'イベント', multiType: c ? c.multiType : '工事', enabled: c ? c.enabled : true, picks: null };
+    calForm();
+    if (!c) loadMyCalendars();
+  } else if (kind === 'site') {
+    const x = i != null ? D.siteList[i] : null;
+    editing = { kind: kind, origName: x ? x.name : '', name: x ? x.name : '', wxCode: x ? x.wxCode : '', wxIdx: x && x.wxIdx != null ? x.wxIdx : '',
+      wxName: x ? x.wxName : '', order: x && x.order !== 99 ? x.order : '' };
+    siteForm();
+  } else {
+    const o = i != null ? D.owners[i] : null;
+    const used = (D.owners || []).map(x => x.color);
+    editing = { kind: kind, origName: o ? o.name : '', name: o ? o.name : '', color: o ? o.color : (PALETTE.find(c => used.indexOf(c) < 0) || PALETTE[0]),
+      order: o && o.order !== 99 ? o.order : '' };
+    ownerForm();
+  }
+  $('ov').classList.add('on');
+}
+function typeSel(id, v) {
+  return '<select id="' + id + '">' + D.types.map(t => '<option' + (t === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select>';
+}
+function palette(cur, fn) {
+  return '<div class="colors">' + PALETTE.map(c => '<button type="button" class="' + (cur === c ? 'on' : '') + '" style="background:' + c +
+    '" onclick="' + fn + '(\'' + c + '\')"></button>').join('') +
+    '<input type="color" value="' + (cur || '#607d8b') + '" style="width:40px;height:32px;padding:0;border:none" onchange="' + fn + '(this.value)"></div>';
+}
+function delBtn(fn) { return '<button class="del" onclick="' + fn + '()">削除</button>'; }
+
+/* Googleカレンダー */
+function calForm() {
+  const c = editing;
+  const picks = c.origId ? '' : '<label>カレンダーを選ぶ</label>' + (c.picks == null ? '<div class="hint">読み込み中…</div>' :
+    c.picks.length ? '<div class="calpick">' + c.picks.map((p, i) => '<div class="' + (p.id === c.id ? 'on' : '') + '" onclick="pickCal(' + i + ')">' +
+      '<span class="sw" style="width:12px;height:12px;border-radius:3px;background:' + (p.color || '#90a4ae') + '"></span>' + h(p.name) + '</div>').join('') + '</div>' :
+    '<div class="hint">一覧を取得できませんでした。下にカレンダーIDを直接入力してください</div>');
+  $('sheet').innerHTML = '<h2>' + (c.origId ? 'カレンダー連携を編集' : 'カレンダー連携を追加') + '</h2>' + picks +
+    '<label>カレンダーID *</label><input id="cId" value="' + h(c.id) + '" placeholder="xxxx@group.calendar.google.com"' + (c.origId ? ' readonly style="background:#f3f5f8"' : '') + '>' +
+    '<div class="hint">Googleカレンダーの「設定と共有 → カレンダーの統合」に出るID。一覧に無いカレンダーは、持ち主のアカウントに共有してもらう</div>' +
+    '<div class="two"><div><label>表示名</label><input id="cName" value="' + h(c.name) + '" maxlength="30"></div>' +
+    '<div>' + siteField('cSite', c.site).replace('<option value="">全拠点共通</option>', '<option value="">全拠点共通</option>') + '</div></div>' +
+    '<div class="two"><div><label>1日だけの予定</label>' + typeSel('cSingle', c.singleType) + '</div><div><label>複数日の予定</label>' + typeSel('cMulti', c.multiType) + '</div></div>' +
+    '<label>色</label>' + palette(c.color, 'setCalColor') +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:15px;color:var(--text)"><input type="checkbox" id="cOn" style="width:22px;height:22px"' + (c.enabled ? ' checked' : '') + '>表示する</label>' +
+    '<div class="acts">' + (c.origId ? delBtn('delCal') : '') + '<button class="cancel" onclick="closeForm()">キャンセル</button><button class="save" onclick="saveCal()">保存</button></div>';
+}
+function syncCal() {
+  if (!$('cId')) return;
+  Object.assign(editing, { id: val('cId').trim(), name: val('cName'), site: val('cSite'), singleType: val('cSingle'), multiType: val('cMulti'), enabled: $('cOn').checked });
+}
+function setCalColor(c) { syncCal(); editing.color = c; calForm(); }
+function pickCal(i) {
+  syncCal();
+  const p = editing.picks[i];
+  editing.id = p.id;
+  if (!editing.name) editing.name = p.name;
+  if (p.color) editing.color = p.color;
+  calForm();
+}
+function loadMyCalendars() {
+  google.script.run.withSuccessHandler(list => { if (editing && editing.kind === 'cal') { syncCal(); editing.picks = list || []; calForm(); } })
+    .withFailureHandler(() => { if (editing && editing.kind === 'cal') { syncCal(); editing.picks = []; calForm(); } }).listMyCalendars(KEY);
+}
+function saveCal() {
+  if (busy) return;
+  syncCal();
+  if (!editing.id) return toast('カレンダーを選ぶか、IDを入力してください');
+  busy = true;
+  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveCalendarLink(KEY, Object.assign({}, editing, { picks: null }));
+}
+function delCal() {
+  if (busy || !confirm('カレンダー連携「' + editing.name + '」を削除します（Googleカレンダー自体は消えません）。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteCalendarLink(KEY, editing.origId);
+}
+function calTest() {
+  toast('接続テスト中…');
+  google.script.run.withSuccessHandler(lines => {
+    $('sheet').innerHTML = '<h2>カレンダー連携の接続テスト</h2><div style="font-size:14px;line-height:1.9">' + lines.map(h).join('<br>') + '</div>' +
+      '<div class="hint" style="margin-top:8px">✕ のカレンダーは、スプレッドシートの持ち主のアカウントに共有されているか確認してください</div>' +
+      '<div class="acts"><button class="cancel" onclick="closeForm();load()">閉じる</button></div>';
+    $('ov').classList.add('on');
+  }).withFailureHandler(fail).testCalendarLinks(KEY);
+}
+
+/* 担当者 */
+function ownerForm() {
+  const o = editing;
+  $('sheet').innerHTML = '<h2>' + (o.origName ? '担当者を編集' : '担当者を追加') + '</h2>' +
+    '<div class="two"><div><label>名前 *</label><input id="oName" value="' + h(o.name) + '" maxlength="30" placeholder="例）平安"></div>' +
+    '<div><label>表示順</label><input type="number" id="oOrder" value="' + h(o.order) + '" placeholder="小さい順"></div></div>' +
+    '<label>色</label>' + palette(o.color, 'setOwnerColor') +
+    (o.origName ? '<div class="hint">名前を変えても、入力済みの予定の担当欄は変わりません</div>' : '') +
+    '<div class="acts">' + (o.origName ? delBtn('delOwner') : '') + '<button class="cancel" onclick="closeForm()">キャンセル</button><button class="save" onclick="saveOwnerF()">保存</button></div>';
+}
+function setOwnerColor(c) { editing.name = val('oName'); editing.order = val('oOrder'); editing.color = c; ownerForm(); }
+function saveOwnerF() {
+  if (busy) return;
+  Object.assign(editing, { name: val('oName').trim(), order: val('oOrder') });
+  if (!editing.name) return toast('名前を入力してください');
+  busy = true;
+  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveOwner(KEY, editing);
+}
+function delOwner() {
+  if (busy || !confirm('担当者「' + editing.origName + '」を削除します。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteOwner(KEY, editing.origName);
+}
+
+/* 拠点 */
+function siteForm() {
+  const x = editing;
+  $('sheet').innerHTML = '<h2>' + (x.origName ? '拠点を編集' : '拠点を追加') + '</h2>' +
+    '<div class="two"><div><label>拠点名 *</label><input id="xName" value="' + h(x.name) + '" maxlength="30" placeholder="例）本社"></div>' +
+    '<div><label>表示順</label><input type="number" id="xOrder" value="' + h(x.order) + '" placeholder="小さい順"></div></div>' +
+    '<label>この拠点のTVの天気（空欄＝表示設定と同じ）</label><select id="xWx"><option value="">表示設定と同じ</option>' +
+    wxOptions(x.wxCode || '').replace(/ selected/g, '').replace('value="' + (x.wxCode || '#') + '"', 'value="' + x.wxCode + '" selected') + '</select>' +
+    '<div class="two"><div><label>天気の地点名</label><input id="xWxName" value="' + h(x.wxName) + '" maxlength="20"></div>' +
+    '<div><label>地域内の番号</label><input type="number" id="xWxIdx" min="0" max="20" value="' + h(x.wxIdx) + '"></div></div>' +
+    (x.origName ? '<div class="hint">拠点名を変えると、その拠点が付いた予定・TV用URLとのつながりが切れます（予定側の拠点は変わりません）</div>' : '') +
+    '<div class="acts">' + (x.origName ? delBtn('delSite') : '') + '<button class="cancel" onclick="closeForm()">キャンセル</button><button class="save" onclick="saveSiteF()">保存</button></div>';
+}
+function saveSiteF() {
+  if (busy) return;
+  Object.assign(editing, { name: val('xName').trim(), order: val('xOrder'), wxCode: val('xWx'), wxName: val('xWxName'), wxIdx: val('xWxIdx') });
+  if (!editing.name) return toast('拠点名を入力してください');
+  busy = true;
+  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveSite(KEY, editing);
+}
+function delSite() {
+  if (busy || !confirm('拠点「' + editing.origName + '」を削除します。予定に付いた拠点名はそのまま残ります。よろしいですか？')) return;
+  busy = true;
+  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteSite(KEY, editing.origName);
+}
+
+/* ---------- PC表示 ---------- */
+let isPC = false;
+function prefView() { try { return localStorage.getItem('viewMode') || ''; } catch (e) { return ''; } }
+function applyView() {
+  const pref = prefView();
+  isPC = pref ? pref === 'pc' : window.matchMedia('(min-width: 1000px)').matches;
+  document.body.classList.toggle('pc', isPC);
+  $('vt').textContent = isPC ? 'スマホ表示' : 'PC表示';
+}
+function toggleView() {
+  try { localStorage.setItem('viewMode', isPC ? 'mobile' : 'pc'); } catch (e) {}
+  applyView(); render();
+}
+window.addEventListener('resize', () => { const was = isPC; applyView(); if (was !== isPC) render(); });
+
+const TYPE_COLOR = { 'イベント': '#455a64', '工事': '#3b6ea5', '人': '#6a4fa3' };
+function evColor(e) {
+  if (e.color) return e.color;
+  if (D.display['色分け'] === '担当者') {
+    const name = String(e.owner || '').split(/[,、\s]+/)[0];
+    const o = name && (D.owners || []).find(x => x.name === name);
+    if (o) return o.color;
+  }
+  const b = e.badge && D.badges.find(x => x.name === e.badge);
+  return b ? b.bg : TYPE_COLOR[e.type];
+}
+function calendarView() {
+  const y = cur.getFullYear(), m = cur.getMonth();
+  const start = new Date(y, m, 1 - new Date(y, m, 1).getDay());
+  const weeks = Math.ceil((new Date(y, m, 1).getDay() + new Date(y, m + 1, 0).getDate()) / 7);
+  let html = filterBar() + '<div class="legend">' + ((D.display['色分け'] === '担当者' && D.owners.length) ?
+      D.owners.map(o => '<span><i style="background:' + o.color + '"></i>' + h(o.name) + '</span>').join('') :
+      Object.keys(TYPE_COLOR).map(t => '<span><i style="background:' + TYPE_COLOR[t] + '"></i>' + t + '</span>').join('')) +
+    '<span>日付をクリックで追加／予定をクリックで編集</span></div><div class="cal">' +
+    WD.map((w, i) => '<div class="hd' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '">' + w + '</div>').join('');
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const ds = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const out = d.getMonth() !== m, dow = d.getDay();
+    const evs = out ? [] : D.events.filter(e => e.start <= ds && e.end >= ds && siteOk(e));
+    html += '<div class="dc' + (out ? ' out' : '') + (ds === D.today ? ' today' : '') + (dow === 0 ? ' sun' : dow === 6 ? ' sat' : '') +
+      '" onclick="openForm(null,\'' + ds + '\')"><div class="dn">' + d.getDate() + '<span class="add">＋追加</span></div>' +
+      evs.map(e => '<div class="ce' + (e.start < ds && dow !== 0 ? ' cont' : '') + '" style="background:' + evColor(e) + '" title="' + h(e.title) +
+        '" onclick="event.stopPropagation();openForm(\'' + h(e.id) + '\')">' + (e.start < ds && dow !== 0 ? '↳ ' : '') +
+        (e.badge ? '[' + h(e.badge) + '] ' : '') + (e.time && e.start === ds ? h(e.time) + ' ' : '') + h(e.title) + '</div>').join('') + '</div>';
+  }
+  $('main').innerHTML = html + '</div>';
+}
+
+/* ---------- 天気の取得状況（表示設定タブ） ---------- */
+function calStatusHtml() {
+  const c = D.calStatus;
+  if (!c) return '';
+  return '<div class="panel" style="border-color:' + (c.ok ? '#a5d6a7' : '#ef9a9a') + ';background:' + (c.ok ? '#f1f8f1' : '#fff4f4') + '">' +
+    '<h3>' + (c.ok ? '✅ Googleカレンダー連携：OK' : '⚠️ Googleカレンダー連携：一部取得できません') + '</h3><div class="m" style="font-size:13px">' +
+    h(c.time) + '　' + h(c.msg) + (c.ok ? '' : '<br>メニュー「カレンダー連携の接続テスト」で確認できます') + '</div></div>';
+}
+function wxStatusHtml() {
+  const w = D.weatherStatus;
+  if (!w || String(D.display['天気_表示']) === 'OFF') return '';
+  return '<div class="panel" style="border-color:' + (w.ok ? '#a5d6a7' : '#ef9a9a') + ';background:' + (w.ok ? '#f1f8f1' : '#fff4f4') + '">' +
+    '<h3>' + (w.ok ? '✅ 天気予報：取得OK' : '⚠️ 天気予報：取得エラー') + '</h3><div class="m" style="font-size:13px">' + h(w.time) + '　' + h(w.msg) +
+    (w.ok ? '' : '<br>スプレッドシートのメニュー「天気予報の接続テスト」で詳しい原因を確認できます') + '</div></div>';
+}
+
+applyView();
+load();
+</script>
+</body>
+</html>
