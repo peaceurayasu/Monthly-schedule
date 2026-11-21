@@ -156,6 +156,14 @@ body.pc .stnav{flex-wrap:wrap;overflow:visible}
 .ochip.on i{background:#fff}
 .ochip.on::after{content:'✓';margin-left:2px}
 #loading{text-align:center;color:var(--sub);padding:30px 0}
+/* 保存中・削除中の表示（通信が終わるまで画面を押せないようにして、二重送信も防ぐ） */
+#busy{position:fixed;inset:0;z-index:30;background:rgba(14,22,33,.35);display:none;align-items:center;justify-content:center;padding:20px}
+#busy.on{display:flex}
+.bcard{background:#263238;color:#fff;padding:16px 22px;border-radius:14px;display:flex;align-items:center;gap:12px;font-size:15px;font-weight:800;
+  box-shadow:0 6px 24px rgba(0,0,0,.3);max-width:320px;line-height:1.5}
+.bspin{flex:none;width:22px;height:22px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+#loading::before{content:'';display:block;width:28px;height:28px;margin:0 auto 10px;border:3px solid var(--line);border-top-color:#1565c0;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 /* 入力者名（変更履歴用） */
 .who{margin-left:auto;flex:none;background:#fff;border:1px solid var(--line);color:var(--sub);border-radius:16px;padding:5px 12px;font-size:13px;font-weight:800;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .who.unset{border-color:#ef6c00;color:#ef6c00}
@@ -174,6 +182,7 @@ body.pc .stnav{flex-wrap:wrap;overflow:visible}
 
 <div class="ov" id="ov" onclick="if(event.target===this)closeForm()"><div class="sheet" id="sheet"></div></div>
 <div id="toast"></div>
+<div id="busy"><div class="bcard"><div class="bspin"></div><div id="busyMsg">保存中…</div></div></div>
 
 <script>
 const KEY_BASE = <?!= keyJson ?>;
@@ -192,7 +201,33 @@ const md = s => Number(s.slice(5,7)) + '/' + Number(s.slice(8,10));
 const wd = s => WD[new Date(s.replace(/-/g,'/')).getDay()];
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 2200); }
-function fail(e) { busy = false; toast('エラー：' + (e && e.message ? e.message : e)); }
+function fail(e) { busy = false; hideBusy(); toast('エラー：' + (e && e.message ? e.message : e)); }
+
+/* ---------- 保存中・削除中の表示 ---------- */
+function showBusy(msg) {
+  const b = $('busy');
+  $('busyMsg').textContent = msg;
+  b.classList.add('on');
+  clearTimeout(b._t);
+  b._t = setTimeout(() => { $('busyMsg').textContent = msg + '（通信に時間がかかっています。そのままお待ちください）'; }, 10000);
+}
+function hideBusy() { const b = $('busy'); b.classList.remove('on'); clearTimeout(b._t); }
+/**
+ * google.script.run の代わりに使う。呼んだ瞬間に「保存中…」などを出し、結果が返ったら（成功でも失敗でも）消す。
+ * 使い方は google.script.run と同じ：run('保存中…').withSuccessHandler(…).withFailureHandler(…).saveEvent(KEY, e)
+ */
+function run(msg) {
+  showBusy(msg);
+  let ok = () => {}, ng = fail;
+  const api = new Proxy({}, { get(_, name) {
+    if (name === 'withSuccessHandler') return f => { ok = f; return api; };
+    if (name === 'withFailureHandler') return f => { ng = f; return api; };
+    return (...args) => google.script.run
+      .withSuccessHandler(v => { hideBusy(); ok(v); })
+      .withFailureHandler(e => { hideBusy(); ng(e); })[name](...args);
+  } });
+  return api;
+}
 
 function load() {
   $('ymLbl').textContent = cur.getFullYear() + '年' + (cur.getMonth() + 1) + '月';
@@ -435,29 +470,29 @@ function saveEv() {
   if (e.pattern) {
     if ((e.pattern === '毎週' || e.pattern === '毎月（第N曜日）') && !e.dows) return toast('曜日を選んでください');
     busy = true;
-    google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveRecurring(KEY, {
+    run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveRecurring(KEY, {
       id: e.isRule ? e.id : '', pattern: e.pattern, dows: e.dows, day: e.day, nth: e.nth, from: e.start, to: e.end,
       type: e.type, badge: e.badge, time: e.time, title: e.title, owner: e.owner, site: e.site, color: e.color });
     return;
   }
   if (!e.start) return toast('開始日を入力してください');
   busy = true;
-  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveEvent(KEY, e);
+  run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveEvent(KEY, e);
 }
 function delEvent() {
   if (busy || !confirm('「' + editing.title + '」を削除します。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteEvent(KEY, editing.id);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteEvent(KEY, editing.id);
 }
 function delRule() {
   if (busy || !confirm('繰り返し予定「' + editing.title + '」を、全ての回まとめて削除します。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteRecurring(KEY, editing.id);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteRecurring(KEY, editing.id);
 }
 function skipOcc() {
   if (busy || !confirm(md(editing.occDate) + 'の「' + editing.title + '」だけを休みにします。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done(md(editing.occDate) + 'を休みにしました')).withFailureHandler(fail).skipRecurringDate(KEY, editing.id, editing.occDate);
+  run('変更中…').withSuccessHandler(done(md(editing.occDate) + 'を休みにしました')).withFailureHandler(fail).skipRecurringDate(KEY, editing.id, editing.occDate);
 }
 
 function taskForm() {
@@ -476,15 +511,15 @@ function saveTk() {
   if (!editing.title.trim()) return toast('件名を入力してください');
   if (!editing.due) return toast('期限を入力してください');
   busy = true;
-  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveTask(KEY, editing);
+  run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveTask(KEY, editing);
 }
 function delTask() {
   if (busy || !confirm('「' + editing.title + '」を削除します。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteTask(KEY, editing.id);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteTask(KEY, editing.id);
 }
 function toggleTask(id, isDone) {
-  google.script.run.withSuccessHandler(() => { toast(isDone ? '完了にしました' : '未完了に戻しました'); load(); }).withFailureHandler(fail).setTaskDone(KEY, id, isDone);
+  run('更新中…').withSuccessHandler(() => { toast(isDone ? '完了にしました' : '未完了に戻しました'); load(); }).withFailureHandler(fail).setTaskDone(KEY, id, isDone);
 }
 
 /* ---------- お知らせ（テロップ） ---------- */
@@ -577,12 +612,12 @@ function saveNt() {
   if (editing.end && editing.end < editing.start) return toast('終了日が開始日より前です');
   busy = true;
   if (editing.imageData) toast(/^data:video/.test(editing.imageData) ? '動画を保存中…（少し時間がかかります）' : '写真を保存中…');
-  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveNotice(KEY, editing);
+  run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveNotice(KEY, editing);
 }
 function delNotice() {
   if (busy || !confirm('このお知らせを削除します。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteNotice(KEY, editing.id);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteNotice(KEY, editing.id);
 }
 
 /* ---------- 表示設定（TV画面の見た目） ---------- */
@@ -725,7 +760,7 @@ function saveSt() {
   if (busy) return;
   syncSt();
   busy = true;
-  google.script.run.withSuccessHandler(() => { busy = false; ST = null; toast('表示設定を保存しました'); load(); })
+  run('表示設定を保存中…').withSuccessHandler(() => { busy = false; ST = null; toast('表示設定を保存しました'); load(); })
     .withFailureHandler(fail).saveDisplaySettings(KEY, ST);
 }
 
@@ -777,12 +812,11 @@ function saveNotify() {
     webhookUrl: val('nWh').trim(), webhookClear: $('nWhX') ? $('nWhX').checked : false };
   busy = true;
   syncSt();
-  google.script.run.withSuccessHandler(r => { busy = false; NS = r; toast('通知設定を保存しました'); settingsView(); })
+  run('通知設定を保存中…').withSuccessHandler(r => { busy = false; NS = r; toast('通知設定を保存しました'); settingsView(); })
     .withFailureHandler(fail).saveNotifySettings(KEY, o);
 }
 function testNotify() {
-  toast('送信中…（先に「保存」してから試してください）');
-  google.script.run.withSuccessHandler(lines => {
+  run('テスト送信中…（保存済みの設定で送ります）').withSuccessHandler(lines => {
     $('sheet').innerHTML = '<h2>テスト送信の結果</h2><div style="font-size:14px;line-height:1.9">' + lines.map(h).join('<br>') + '</div>' +
       '<div class="acts"><button class="cancel" onclick="closeForm()">閉じる</button></div>';
     $('ov').classList.add('on');
@@ -790,7 +824,7 @@ function testNotify() {
 }
 function resetHb(name) {
   if (!confirm('「' + name + '」をTVの一覧から消します（撤去したTV用）。よろしいですか？')) return;
-  google.script.run.withSuccessHandler(list => { NS.heartbeats = list; syncSt(); settingsView(); }).withFailureHandler(fail).resetHeartbeat(KEY, name);
+  run('削除中…').withSuccessHandler(list => { NS.heartbeats = list; syncSt(); settingsView(); }).withFailureHandler(fail).resetHeartbeat(KEY, name);
 }
 
 /* ---------- 使い方（マニュアル） ---------- */
@@ -909,16 +943,15 @@ function saveCal() {
   syncCal();
   if (!editing.id) return toast('カレンダーを選ぶか、IDを入力してください');
   busy = true;
-  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveCalendarLink(KEY, Object.assign({}, editing, { picks: null }));
+  run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveCalendarLink(KEY, Object.assign({}, editing, { picks: null }));
 }
 function delCal() {
   if (busy || !confirm('カレンダー連携「' + editing.name + '」を削除します（Googleカレンダー自体は消えません）。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteCalendarLink(KEY, editing.origId);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteCalendarLink(KEY, editing.origId);
 }
 function calTest() {
-  toast('接続テスト中…');
-  google.script.run.withSuccessHandler(lines => {
+  run('接続テスト中…').withSuccessHandler(lines => {
     $('sheet').innerHTML = '<h2>カレンダー連携の接続テスト</h2><div style="font-size:14px;line-height:1.9">' + lines.map(h).join('<br>') + '</div>' +
       '<div class="hint" style="margin-top:8px">✕ のカレンダーは、スプレッドシートの持ち主のアカウントに共有されているか確認してください</div>' +
       '<div class="acts"><button class="cancel" onclick="closeForm();load()">閉じる</button></div>';
@@ -942,12 +975,12 @@ function saveOwnerF() {
   Object.assign(editing, { name: val('oName').trim(), order: val('oOrder') });
   if (!editing.name) return toast('名前を入力してください');
   busy = true;
-  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveOwner(KEY, editing);
+  run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveOwner(KEY, editing);
 }
 function delOwner() {
   if (busy || !confirm('担当者「' + editing.origName + '」を削除します。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteOwner(KEY, editing.origName);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteOwner(KEY, editing.origName);
 }
 
 /* 拠点 */
@@ -968,12 +1001,12 @@ function saveSiteF() {
   Object.assign(editing, { name: val('xName').trim(), order: val('xOrder'), wxCode: val('xWx'), wxName: val('xWxName'), wxIdx: val('xWxIdx') });
   if (!editing.name) return toast('拠点名を入力してください');
   busy = true;
-  google.script.run.withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveSite(KEY, editing);
+  run('保存中…').withSuccessHandler(done('保存しました')).withFailureHandler(fail).saveSite(KEY, editing);
 }
 function delSite() {
   if (busy || !confirm('拠点「' + editing.origName + '」を削除します。予定に付いた拠点名はそのまま残ります。よろしいですか？')) return;
   busy = true;
-  google.script.run.withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteSite(KEY, editing.origName);
+  run('削除中…').withSuccessHandler(done('削除しました')).withFailureHandler(fail).deleteSite(KEY, editing.origName);
 }
 
 /* ---------- PC表示 ---------- */
