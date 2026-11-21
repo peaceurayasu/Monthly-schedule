@@ -1,5 +1,5 @@
 /**
- * 電子予定表パッケージ v2.1.1
+ * 電子予定表パッケージ v2.1.2
  * ------------------------------------------------------------
  * スプレッドシートにバインドして使うGASパッケージ。
  *  - TV表示画面（Display.html）：閲覧専用。自動更新・月切替・夜間暗転・天気予報・お知らせテロップ
@@ -10,7 +10,7 @@
  * 使い方は README.md を参照。
  */
 
-const APP = { NAME: '電子予定表', VERSION: '2.1.1' };
+const APP = { NAME: '電子予定表', VERSION: '2.1.2' };
 
 const SHEET = {
   SETTINGS: '設定', EVENTS: '予定', TASKS: '期限タスク', BADGES: 'バッジ', NOTICES: 'お知らせ',
@@ -478,7 +478,7 @@ function buildDisplayData_(ym, today, site, next) {
   const hi = nLast > tomorrow ? nLast : tomorrow;
   const all = collectEvents_(lo, hi).filter(e => matchSite_(e, site));
   const overlap = (e, a, b) => e.start <= b && e.end >= a;
-  const sortEv = (a, b) => (a.start + a.time).localeCompare(b.start + b.time);
+  const sortEv = (a, b) => (a.start + timeKey_(a.time)).localeCompare(b.start + timeKey_(b.time));
 
   // TVのURLは誰でも開けるため、通知先などの設定は渡さない
   ['編集キー', '公開URL'].concat(typeof NOTIFY_KEYS !== 'undefined' ? NOTIFY_KEYS : []).forEach(k => delete settings[k]);
@@ -590,7 +590,7 @@ function getEditData(key, ym) {
     today: todayStr_(),
     types: EVENT_TYPES,
     badges: readBadges_(),
-    events: collectEvents_(first, last).sort((a, b) => (a.start + a.time).localeCompare(b.start + b.time)),
+    events: collectEvents_(first, last).sort((a, b) => (a.start + timeKey_(a.time)).localeCompare(b.start + timeKey_(b.time))),
     recurring: readRecurring_(),
     patterns: RECUR_PATTERNS,
     sites: readSites_().map(x => x.name),
@@ -1191,6 +1191,15 @@ function fmtYmd_(v) {
   if (v instanceof Date) return isNaN(v) ? '' : Utilities.formatDate(v, tz_(), 'yyyy-MM-dd');
   const m = String(v).trim().match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
   return m ? m[1] + '-' + pad_(m[2]) + '-' + pad_(m[3]) : '';
+}
+
+/**
+ * 並べ替え用の時刻キー。'8:30' → '08:30'（文字列のまま比べると '13:30' が '8:30' より前に来るため）。
+ * 時刻なし（終日）は '' を返すので、同じ日の中で先頭に並ぶ。
+ */
+function timeKey_(t) {
+  const m = String(t || '').trim().match(/^(\d{1,2}):(\d{2})/);
+  return m ? pad_(m[1]) + ':' + m[2] : '';
 }
 
 function fmtTime_(v) {

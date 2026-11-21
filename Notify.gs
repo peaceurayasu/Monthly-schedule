@@ -24,6 +24,9 @@ function recordHeartbeat_(site) {
     const cache = CacheService.getScriptCache();
     if (cache.get('hbw_' + name)) return;
     cache.put('hbw_' + name, '1', 60);
+    // 拠点シートに無い名前（URLの打ち間違い・関係ない人のアクセス）は記録しない。
+    // 記録すると監視対象に入り、30分後に「TVが止まっている」メールが誤って届くため。
+    if (site && !readSites_().some(x => x.name === site)) return;
     const props = PropertiesService.getScriptProperties();
     props.setProperty(HB_PREFIX + name, String(Date.now()));
     if (props.getProperty(HB_ALERT_PREFIX + name)) {
@@ -104,7 +107,7 @@ function buildDailyMessage_() {
   const tomorrow = addDaysStr_(today, 1);
   const WD = '日月火水木金土';
   const label = d => Number(d.slice(5, 7)) + '/' + Number(d.slice(8, 10)) + '(' + WD.charAt(parseDate_(d).getDay()) + ')';
-  const evs = collectEvents_(tomorrow, tomorrow).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
+  const evs = collectEvents_(tomorrow, tomorrow).sort((a, b) => (timeKey_(a.time) || '99').localeCompare(timeKey_(b.time) || '99'));
   const warn = Number(getSettings_()['期限警告日数']) || 3;
   const tasks = readTasks_().filter(t => !t.done && diffDays_(today, t.due) <= warn).sort((a, b) => a.due.localeCompare(b.due));
   const lines = ['■ 明日 ' + label(tomorrow) + ' の予定（' + evs.length + '件）'];
@@ -204,7 +207,9 @@ function saveNotifySettings(key, o) {
     if (v && !/^\d{1,2}:\d{2}$/.test(v)) throw new Error(k + 'は「8:00」の形式で入力してください');
     clean[k] = v;
   });
-  clean['前日通知_時刻'] = Math.max(0, Math.min(23, Math.floor(Number(o['前日通知_時刻']) || 17)));
+  // 0時も選べるように、空欄・数字以外のときだけ初期値17時にする（「|| 17」だと0が17になっていた）
+  const hour = String(o['前日通知_時刻'] == null ? '' : o['前日通知_時刻']).trim() === '' ? NaN : Math.floor(Number(o['前日通知_時刻']));
+  clean['前日通知_時刻'] = isNaN(hour) ? 17 : Math.max(0, Math.min(23, hour));
   if ((clean['稼働チェック'] === 'ON') && !clean['通知先メール']) throw new Error('TV稼働チェックには通知先メールが必要です');
 
   writeSettings_(clean);
