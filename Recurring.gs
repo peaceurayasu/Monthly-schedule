@@ -102,13 +102,15 @@ function saveRecurring(key, r) {
   const except = old ? old.except.join(',') : '';
   const row = [v.id, v.type, v.badge, v.pattern, v.dows, v.day || '', v.nth || '',
     v.from ? parseDate_(v.from) : '', v.to ? parseDate_(v.to) : '', v.time, v.title, v.owner, v.site, v.color, except, new Date()];
-  upsertRow_(SHEET.RECUR, HEADERS.RECUR.length, v.id, row);
+  const updated = upsertRow_(SHEET.RECUR, HEADERS.RECUR.length, v.id, row);
+  logChange_(updated ? '変更' : '追加', '繰り返し予定', v.title, v.id);
   return v.id;
 }
 
 function deleteRecurring(key, id) {
   checkKey_(key);
-  deleteRowById_(SHEET.RECUR, id);
+  const old = deleteRowById_(SHEET.RECUR, id);
+  logChange_('削除', '繰り返し予定', old[10], id);
   return true;
 }
 
@@ -128,6 +130,7 @@ function skipRecurringDate(key, id, ds) {
     if (cur.indexOf(ds) < 0) cur.push(ds);
     sh.getRange(row, col).setNumberFormat('@').setValue(cur.join(','));
     bumpDataVersion_();
+    logChange_(ds + 'だけ休み', '繰り返し予定', sh.getRange(row, HEADERS.RECUR.indexOf('件名') + 1).getValue(), id);
   } finally {
     lock.releaseLock();
   }

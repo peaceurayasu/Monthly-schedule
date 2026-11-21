@@ -24,6 +24,19 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 
 /* 天気予報 */
 #wx{display:flex;gap:.4vw;margin-left:auto;flex:0 1 auto;min-width:0;overflow:hidden}
+/* 気象警報・注意報（天気の左に出す。出ていないときは何も表示しない） */
+#wxWarn{display:flex;gap:.3vw;margin-left:auto;flex:none;align-items:center}
+#wxWarn:empty{display:none}
+#wxWarn:not(:empty)+#wx{margin-left:.6vw}
+.wn{font-size:calc(1.9vh*var(--fs,1));font-weight:800;padding:.4vh .6vw;border-radius:.6vh;white-space:nowrap;line-height:1.2}
+.wn.l1{background:#f2e700;color:#111}
+.wn.l2{background:#ff2800;color:#fff;animation:wnBlink 2s ease-in-out infinite}
+.wn.l3{background:#aa00aa;color:#fff;animation:wnBlink 1.5s ease-in-out infinite}
+.wn.l4{background:#0c000c;color:#fff;box-shadow:0 0 0 .3vh #fff inset;animation:wnBlink 1.2s ease-in-out infinite}
+@keyframes wnBlink{50%{opacity:.65}}
+.tk-item.warn{color:#ffd54f}
+.tk-item.warn.heavy{color:var(--sun)}
+.tk-warn{background:#d32f2f;color:#fff;font-size:2vh;padding:.2vh .5vw;border-radius:.5vh;margin-right:.6vw;vertical-align:middle}
 .wx{flex:none}
 #wx:empty{display:none}
 #wx:empty+.clock{margin-left:auto}
@@ -184,6 +197,7 @@ header>.month,header>.title,header>.clock,header>.flag{flex:none;white-space:now
     <div class="site" id="site"></div>
     <div class="company" id="company"></div>
     <div class="flag" id="flag">来月の予定</div>
+    <div id="wxWarn"></div>
     <div id="wx"></div>
     <div id="qrHead"><div class="qrimg" id="qrImg"></div><div class="qrtxt" id="qrTxt"></div></div>
     <div class="clock"><div class="t" id="clockT">--:--</div><div class="d" id="clockD"></div></div>
@@ -456,6 +470,7 @@ function render(d) {
   fitSide();
     fitSide();
     renderWeather(d);
+    renderWarn(d);
     renderTicker(d);
     return;
   }
@@ -494,6 +509,7 @@ function render(d) {
   board.innerHTML = html;
   renderSide(d);
   renderWeather(d);
+  renderWarn(d);
   renderTicker(d);
 }
 
@@ -667,6 +683,17 @@ function renderWeather(d) {
   });
 }
 
+/* ---------- 気象警報・注意報 ---------- */
+/** 重い順に最大3つまで札を出す（それ以上は「ほかN件」）。色は気象庁と同じ：注意報＝黄、警報＝赤、危険警報＝紫、特別警報＝黒 */
+function renderWarn(d) {
+  const box = $('wxWarn');
+  const items = (d.warnings && d.warnings.items) || [];
+  if (!items.length) { box.innerHTML = ''; return; }
+  const shown = items.slice(0, 3);
+  box.innerHTML = shown.map(x => '<span class="wn l' + x.level + '">' + (x.level >= 2 ? '⚠ ' : '') + h(x.name) + '</span>').join('') +
+    (items.length > shown.length ? '<span class="wn l1">ほか' + (items.length - shown.length) + '件</span>' : '');
+}
+
 /* ---------- お知らせテロップ ---------- */
 const TK_SPEED = { '遅い': 0.06, '標準': 0.09, '速い': 0.13 }; // 画面幅に対する1秒あたりの移動量
 let tkSig = '', tkAnim = null;
@@ -679,8 +706,10 @@ function renderTicker(d) {
   if (sig === tkSig) return; // 内容が同じなら流し直さない（更新のたびに先頭に戻らないように）
   tkSig = sig;
   const track = $('tkTrack');
-  track.innerHTML = list.map(n => '<span class="tk-item' + (n.important ? ' important' : '') + '">' +
-    (n.important ? '<span class="tk-imp">重要</span>' : '') + h(n.text) + '</span>').join('');
+  track.innerHTML = list.map(n => n.warning
+    ? '<span class="tk-item warn' + (n.important ? ' heavy' : '') + '"><span class="tk-warn">⚠ 気象</span>' + h(n.text) + '</span>'
+    : '<span class="tk-item' + (n.important ? ' important' : '') + '">' +
+      (n.important ? '<span class="tk-imp">重要</span>' : '') + h(n.text) + '</span>').join('');
   if (tkAnim) tkAnim.cancel();
   requestAnimationFrame(() => {
     const viewW = $('tkView').clientWidth, trackW = track.scrollWidth;
@@ -750,13 +779,15 @@ function morningText(d) {
 function onData(d) {
   checkSound();
   const imp = (d.notices || []).filter(n => n.important);
+  // 警報はテロップOFFでもチャイム＋読み上げする（新しい警報が出たときだけ。注意報は鳴らさない）
+  if (d.warnNotice && d.warnNotice.important && !imp.some(n => n.id === d.warnNotice.id)) imp.push(d.warnNotice);
   if (seenImportant === null) {
     seenImportant = new Set(imp.map(n => n.id));        // 最初の読み込みでは鳴らさない
   } else {
     const fresh = imp.filter(n => !seenImportant.has(n.id));
     fresh.forEach(n => seenImportant.add(n.id));
     if (fresh.length && S['お知らせチャイム'] !== 'OFF' && !$('dim').classList.contains('on')) {
-      announce('お知らせです。' + fresh.map(n => n.text).join('。'));
+      announce('お知らせです。' + fresh.map(n => n.text.replace(/^【[^】]*】/, '')).join('。'));
     }
   }
   preparePhotos(d.photos || []);

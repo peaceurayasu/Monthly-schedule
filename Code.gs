@@ -1,20 +1,21 @@
 /**
- * 電子予定表パッケージ v2.1.2
+ * 電子予定表パッケージ v2.2.0
  * ------------------------------------------------------------
  * スプレッドシートにバインドして使うGASパッケージ。
  *  - TV表示画面（Display.html）：閲覧専用。自動更新・月切替・夜間暗転・天気予報・お知らせテロップ
  *  - 入力画面（Input.html）  ：スマホ向け。URLの編集キーで保護
  * 機能ごとのファイル：Masters.gs（拠点・担当者）／Recurring.gs（繰り返し予定）／
  *   CalendarSync.gs（Googleカレンダー連携）／Archive.gs（過去予定のアーカイブ）／
- *   Notify.gs（通知・TV稼働チェック）／Media.gs（写真・図面・動画）／QrLib.gs（QRコード）
+ *   Notify.gs（通知・TV稼働チェック）／Media.gs（写真・図面・動画）／QrLib.gs（QRコード）／
+ *   Warning.gs（気象警報・注意報）／Backup.gs（自動バックアップ）／Log.gs（変更履歴）
  * 使い方は README.md を参照。
  */
 
-const APP = { NAME: '電子予定表', VERSION: '2.1.2' };
+const APP = { NAME: '電子予定表', VERSION: '2.2.0' };
 
 const SHEET = {
   SETTINGS: '設定', EVENTS: '予定', TASKS: '期限タスク', BADGES: 'バッジ', NOTICES: 'お知らせ',
-  RECUR: '繰り返し予定', SITES: '拠点', OWNERS: '担当者', CALS: 'カレンダー連携', ARCHIVE: '予定_過去'
+  RECUR: '繰り返し予定', SITES: '拠点', OWNERS: '担当者', CALS: 'カレンダー連携', ARCHIVE: '予定_過去', LOG: '変更履歴'
 };
 
 const HEADERS = {
@@ -59,6 +60,7 @@ const DEFAULT_SETTINGS = [
   ['天気_地域コード', '471000', '気象庁の府県予報区コード（例：沖縄本島地方 471000／東京都 130000）README参照'],
   ['天気_エリア番号', 0, '地域内の何番目の地域を使うか（0＝最初）'],
   ['天気_日数', 5, '表示する日数（3〜5）'],
+  ['警報_表示', 'ON', 'ON／OFF。気象庁の警報・注意報をTV画面に表示（警報はチャイム＋読み上げ）。地域は天気予報と同じ'],
   ['テロップ表示', 'ON', 'ON／OFF。画面下にお知らせを流す'],
   ['テロップ速度', '標準', '遅い／標準／速い'],
   ['色分け', '種別・バッジ', '種別・バッジ／担当者（担当者シートの色で塗る）'],
@@ -93,13 +95,14 @@ const DEFAULT_SETTINGS = [
   ['監視終了', '18:00', '稼働チェックをする時間帯（終了）'],
   ['土日も監視', 'OFF', 'ON／OFF'],
   ['前日通知', 'OFF', 'ON／OFF。毎日、明日の予定を送る'],
-  ['前日通知_時刻', 17, '送る時刻（0〜23時）']
+  ['前日通知_時刻', 17, '送る時刻（0〜23時）'],
+  ['バックアップ世代数', 12, '自動バックアップを何個まで残すか（12＝毎週なら約3か月分）']
 ];
 
 /** 表示設定として入力画面から変更できる項目 */
 const DISPLAY_SETTING_KEYS = ['表示タイトル', '会社名', 'テーマ', '文字サイズ', 'カスタム_背景色', 'カスタム_パネル色',
   'カスタム_文字色', 'カスタム_補助文字色', 'カスタム_罫線色', 'カスタム_強調色', '月切替(秒)', '夜間暗転開始', '夜間暗転終了',
-  '天気_表示', '天気_地点名', '天気_地域コード', '天気_エリア番号', '天気_日数', 'テロップ表示', 'テロップ速度',
+  '天気_表示', '天気_地点名', '天気_地域コード', '天気_エリア番号', '天気_日数', '警報_表示', 'テロップ表示', 'テロップ速度',
   '色分け', 'アーカイブ月数', '表示モード', '朝の読み上げ時刻', 'お知らせチャイム', '写真表示_間隔(分)', '写真表示_秒',
   '段の並び', '右欄_今日の予定', '右欄_明日の予定', '右欄_期限タスク', '右欄_その後の予定', '名前マグネット', '動画の音',
   'QRコード', 'QRコード_説明', 'YouTube_URL', 'YouTube_間隔(分)', 'YouTube_再生(分)', 'YouTube_時間帯', 'YouTube_音', '焼付防止_ずらし',
@@ -113,7 +116,7 @@ const VIEW_MODES = ['月', '2週間', '人の動き'];
 const LANE_ORDERS = ['工事・案件が上', '予定が上'];
 const SIDE_KEYS = ['右欄_今日の予定', '右欄_明日の予定', '右欄_期限タスク', '右欄_その後の予定'];
 /** ON/OFF だけの表示設定（プルダウンと入力チェックに使う） */
-const ONOFF_DISPLAY_KEYS = SIDE_KEYS.concat(['名前マグネット', '動画の音', 'QRコード', 'YouTube_音', '焼付防止_ずらし']);
+const ONOFF_DISPLAY_KEYS = SIDE_KEYS.concat(['名前マグネット', '動画の音', 'QRコード', 'YouTube_音', '焼付防止_ずらし', '警報_表示']);
 
 const DEFAULT_BADGES = [
   ['入札', '#d32f2f', '#ffffff', 1],
@@ -139,6 +142,7 @@ function onOpen() {
     .addItem('サンプルデータ投入', 'insertSampleData')
     .addSeparator()
     .addItem('表示・入力URLを確認', 'showUrls')
+    .addItem('編集キーを再発行（入力URLを変える）', 'regenerateEditKey')
     .addItem('表示キャッシュをクリア', 'clearDisplayCache')
     .addItem('天気予報の接続テスト', 'testWeather')
     .addItem('カレンダー連携の接続テスト', 'testCalendar')
@@ -146,6 +150,10 @@ function onOpen() {
     .addItem('過去予定を今すぐアーカイブ', 'archiveNow')
     .addItem('自動アーカイブをON（毎月1日）', 'enableAutoArchive')
     .addItem('自動アーカイブをOFF', 'disableAutoArchive')
+    .addSeparator()
+    .addItem('バックアップを今すぐ作成', 'backupNow')
+    .addItem('自動バックアップをON（毎週月曜）', 'enableAutoBackup')
+    .addItem('自動バックアップをOFF', 'disableAutoBackup')
     .addToUi();
 }
 
@@ -385,6 +393,21 @@ function showUrls() {
   ui.showModalDialog(html, '表示・入力URL');
 }
 
+/**
+ * 編集キーを作り直す。入力URL・QRコードが変わり、古いURLでは入力できなくなる。
+ * 入力URLが社外に漏れたかもしれないときに使う。TV画面のQRコードは次の自動更新で新しいものに変わる。
+ */
+function regenerateEditKey() {
+  const ui = uiOrLog_();
+  const res = ui.alert('編集キーの再発行', '新しい編集キーを作ります。\n' +
+    '今までの入力用URL（TV画面のQRコードを含む）は使えなくなるので、スマホのブックマークやホーム画面のアイコンは作り直してください。\n' +
+    'よろしいですか？', ui.ButtonSet.YES_NO);
+  if (res !== ui.Button.YES) return;
+  writeSettings_({ '編集キー': Utilities.getUuid().replace(/-/g, '').slice(0, 16) });
+  logChange_('再発行', '編集キー', '', '');
+  showUrls();
+}
+
 function clearDisplayCache() {
   bumpDataVersion_();
   uiOrLog_().alert('表示キャッシュをクリアしました。TV画面は次回更新時に最新になります。');
@@ -406,10 +429,11 @@ function doGet(e) {
     }
     const t = HtmlService.createTemplateFromFile('Input');
     t.keyJson = JSON.stringify(key).replace(/</g, '\\u003c');
+    // 入力画面は他のサイトに埋め込ませない（透明な枠で重ねて、知らないうちに操作させる攻撃を防ぐ）。
+    // TV画面は Googleサイト などに埋め込めるよう ALLOWALL のまま。
     return t.evaluate()
       .setTitle(APP.NAME + ' 入力')
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   }
   const t = HtmlService.createTemplateFromFile('Display');
   t.siteJson = JSON.stringify(cut_(p.site, 30)).replace(/</g, '\\u003c');
@@ -491,6 +515,8 @@ function buildDisplayData_(ym, today, site, next) {
   const wxCode = siteInfo && siteInfo.wxCode ? siteInfo.wxCode : ('000000' + String(settings['天気_地域コード'] || '').trim()).slice(-6);
   const wxIdx = siteInfo && siteInfo.wxIdx != null ? siteInfo.wxIdx : (Number(settings['天気_エリア番号']) || 0);
   if (siteInfo && siteInfo.wxName) settings['天気_地点名'] = siteInfo.wxName;
+  const warnings = String(settings['警報_表示']) === 'OFF' ? null : getWarnings_(wxCode, wxIdx);
+  const warnNotice = warningNotice_(warnings, settings['天気_地点名']);
 
   return {
     app: APP,
@@ -507,7 +533,9 @@ function buildDisplayData_(ym, today, site, next) {
     tomorrowEvents: all.filter(e => overlap(e, tomorrow, tomorrow)).sort(sortEv),
     nextEvents: all.filter(e => overlap(e, nFirst, nLast)).sort(sortEv).slice(0, 8),
     tasks: tasks.map(t => Object.assign(t, { remain: diffDays_(today, t.due), warnDays: warnDays })),
-    notices: String(settings['テロップ表示']) === 'OFF' ? [] : activeNotices,
+    notices: String(settings['テロップ表示']) === 'OFF' ? [] : (warnNotice ? [warnNotice] : []).concat(activeNotices),
+    warnings: warnings && warnings.items.length ? warnings : null,
+    warnNotice: warnNotice,
     photos: activeNotices.filter(n => n.image).map(n => ({ id: n.image, text: n.text })),
     qr: String(settings['QRコード']) === 'OFF' ? null : qrRows_(inputUrl_()),
     youtube: parseYouTube_(settings['YouTube_URL']),
@@ -651,23 +679,11 @@ function saveDisplaySettings(key, obj) {
     clean[k] = v;
   });
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const sh = ss_().getSheetByName(SHEET.SETTINGS);
-    const vals = sh.getDataRange().getValues();
-    Object.keys(clean).forEach(k => {
-      let r = -1;
-      for (let i = 1; i < vals.length; i++) if (vals[i][0] === k) { r = i + 1; break; }
-      // 時刻が日付に自動変換されないよう文字列で保存
-      if (r > 0) sh.getRange(r, 2).setNumberFormat('@').setValue(String(clean[k]));
-      else { sh.appendRow([k, String(clean[k]), '']); vals.push([k]); }
-    });
-    SETTINGS_MEMO_ = null;
-    bumpDataVersion_();
-  } finally {
-    lock.releaseLock();
-  }
+  const before = getSettings_();
+  const changed = Object.keys(clean).filter(k => String(before[k] == null ? '' : before[k]) !== String(clean[k]));
+  // 時刻が日付に自動変換されないよう文字列で保存（writeSettings_ は Notify.gs）
+  writeSettings_(clean);
+  if (changed.length) logChange_('変更', '表示設定', changed.join('、'), '');
   return true;
 }
 
@@ -675,13 +691,15 @@ function saveEvent(key, ev) {
   checkKey_(key);
   const v = validateEvent_(ev);
   const row = [v.id, v.type, v.badge, parseDate_(v.start), parseDate_(v.end), v.time, v.title, v.detail, v.owner, v.color, new Date(), v.site];
-  upsertRow_(SHEET.EVENTS, HEADERS.EVENTS.length, v.id, row);
+  const updated = upsertRow_(SHEET.EVENTS, HEADERS.EVENTS.length, v.id, row);
+  logChange_(updated ? '変更' : '追加', '予定', v.title, v.id);
   return v.id;
 }
 
 function deleteEvent(key, id) {
   checkKey_(key);
-  deleteRowById_(SHEET.EVENTS, id);
+  const old = deleteRowById_(SHEET.EVENTS, id);
+  logChange_('削除', '予定', old[6], id);
   return true;
 }
 
@@ -693,7 +711,8 @@ function saveTask(key, t) {
   if (!due) throw new Error('期限を入力してください');
   const id = (t.id && String(t.id)) || newId_();
   const row = [id, title, parseDate_(due), !!t.done, cut_(t.owner, 50), new Date(), cut_(t.site, 30)];
-  upsertRow_(SHEET.TASKS, HEADERS.TASKS.length, id, row);
+  const updated = upsertRow_(SHEET.TASKS, HEADERS.TASKS.length, id, row);
+  logChange_(updated ? '変更' : '追加', '期限タスク', title, id);
   return id;
 }
 
@@ -708,6 +727,7 @@ function setTaskDone(key, id, done) {
     sh.getRange(r, 4).setValue(!!done);
     sh.getRange(r, 6).setValue(new Date());
     bumpDataVersion_();
+    logChange_(done ? '完了' : '未完了に戻す', '期限タスク', sh.getRange(r, 2).getValue(), id);
   } finally {
     lock.releaseLock();
   }
@@ -716,7 +736,8 @@ function setTaskDone(key, id, done) {
 
 function deleteTask(key, id) {
   checkKey_(key);
-  deleteRowById_(SHEET.TASKS, id);
+  const old = deleteRowById_(SHEET.TASKS, id);
+  logChange_('削除', '期限タスク', old[1], id);
   return true;
 }
 
@@ -740,7 +761,8 @@ function saveNotice(key, n) {
     image = '';
   }
   const row = [id, text, parseDate_(start), end ? parseDate_(end) : '', !!n.important, new Date(), cut_(n.site, 30), image];
-  upsertRow_(SHEET.NOTICES, HEADERS.NOTICES.length, id, row);
+  const updated = upsertRow_(SHEET.NOTICES, HEADERS.NOTICES.length, id, row);
+  logChange_(updated ? '変更' : '追加', 'お知らせ', text, id);
   return id;
 }
 
@@ -749,6 +771,7 @@ function deleteNotice(key, id) {
   const old = readNotices_().find(x => x.id === String(id));
   deleteRowById_(SHEET.NOTICES, id);
   if (old && old.image) trashImage_(old.image);
+  logChange_('削除', 'お知らせ', old ? old.text : '', id);
   return true;
 }
 
@@ -1083,6 +1106,9 @@ function getHolidays_(y, m) {
   const hit = cache.get(key);
   if (hit) return JSON.parse(hit);
   const map = {};
+  // 取れなかったとき（カレンダーが見つからない・エラー）は10分だけ覚えて、すぐ取り直せるようにする。
+  // 以前は空の結果を6時間覚えてしまい、その間ずっと祝日が出なかった。
+  let ok = false;
   try {
     let cal = CalendarApp.getCalendarById(HOLIDAY_CAL_ID);
     if (!cal) cal = CalendarApp.subscribeToCalendar(HOLIDAY_CAL_ID);
@@ -1091,11 +1117,12 @@ function getHolidays_(y, m) {
         const d = ev.getAllDayStartDate();
         if (d.getMonth() === m - 1) map[d.getDate()] = ev.getTitle();
       });
+      ok = true;
     }
-    cache.put(key, JSON.stringify(map), HOLIDAY_CACHE_SEC);
   } catch (err) {
     console.warn('祝日の取得に失敗: ' + err);
   }
+  try { cache.put(key, JSON.stringify(map), ok ? HOLIDAY_CACHE_SEC : 600); } catch (e) { /* キャッシュ失敗は無視 */ }
   return map;
 }
 
@@ -1103,6 +1130,7 @@ function getHolidays_(y, m) {
  * 書き込み共通
  * ============================================================ */
 
+/** @return {boolean} 既存の行を更新したら true（新規追加なら false） */
 function upsertRow_(sheetName, width, id, row) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -1113,11 +1141,13 @@ function upsertRow_(sheetName, width, id, row) {
     if (r > 0) sh.getRange(r, 1, 1, width).setValues([row]);
     else sh.getRange(sh.getLastRow() + 1, 1, 1, width).setValues([row]);
     bumpDataVersion_();
+    return r > 0;
   } finally {
     lock.releaseLock();
   }
 }
 
+/** @return {Array} 消した行の値（変更履歴に件名を残すため） */
 function deleteRowById_(sheetName, id) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -1125,8 +1155,10 @@ function deleteRowById_(sheetName, id) {
     const sh = ss_().getSheetByName(sheetName);
     const r = findRowById_(sh, id);
     if (r < 0) throw new Error('対象のデータが見つかりません（他の人が削除した可能性があります）');
+    const old = sh.getRange(r, 1, 1, sh.getLastColumn()).getValues()[0];
     sh.deleteRow(r);
     bumpDataVersion_();
+    return old;
   } finally {
     lock.releaseLock();
   }
@@ -1168,9 +1200,16 @@ function validateEvent_(ev) {
   };
 }
 
+/**
+ * 入力画面は「編集キー＋改行＋入力者名」を送ってくる（入力者名は変更履歴用。無くても動く）。
+ * キーが合えば、入力者名を EDITOR_（Log.gs）に入れる。
+ */
 function checkKey_(key) {
+  const s = String(key || '');
+  const i = s.indexOf('\n');
   const k = String(getSettings_()['編集キー'] || '');
-  if (!k || String(key || '') !== k) throw new Error('編集キーが正しくありません。URLを確認してください');
+  if (!k || (i < 0 ? s : s.slice(0, i)) !== k) throw new Error('編集キーが正しくありません。URLを確認してください');
+  EDITOR_ = i < 0 ? '' : cut_(s.slice(i + 1), 30);
 }
 
 /* ============================================================

@@ -93,6 +93,7 @@ function upsertByKey_(sheetName, width, origKey, row) {
     if (at >= 0) sh.getRange(at + 2, 1, 1, width).setValues([row]);
     else sh.getRange(sh.getLastRow() + 1, 1, 1, width).setValues([row]);
     bumpDataVersion_();
+    logChange_(at >= 0 ? '変更' : '追加', sheetName, newKey, '');
   } finally {
     lock.releaseLock();
   }
@@ -109,6 +110,7 @@ function deleteByKey_(sheetName, key) {
     if (at < 0) throw new Error('対象が見つかりません（他の人が削除した可能性があります）');
     sh.deleteRow(at + 2);
     bumpDataVersion_();
+    logChange_('削除', sheetName, String(key).trim(), '');
   } finally {
     lock.releaseLock();
   }

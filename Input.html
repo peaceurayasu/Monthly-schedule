@@ -156,6 +156,9 @@ body.pc .stnav{flex-wrap:wrap;overflow:visible}
 .ochip.on i{background:#fff}
 .ochip.on::after{content:'✓';margin-left:2px}
 #loading{text-align:center;color:var(--sub);padding:30px 0}
+/* 入力者名（変更履歴用） */
+.who{margin-left:auto;flex:none;background:#fff;border:1px solid var(--line);color:var(--sub);border-radius:16px;padding:5px 12px;font-size:13px;font-weight:800;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who.unset{border-color:#ef6c00;color:#ef6c00}
 </style>
 </head>
 <body>
@@ -173,7 +176,9 @@ body.pc .stnav{flex-wrap:wrap;overflow:visible}
 <div id="toast"></div>
 
 <script>
-const KEY = <?!= keyJson ?>;
+const KEY_BASE = <?!= keyJson ?>;
+/** サーバーへ送るキー。「編集キー＋改行＋入力者名」（入力者名は変更履歴用。サーバーの checkKey_ で分ける） */
+let KEY = KEY_BASE;
 const WD = ['日','月','火','水','木','金','土'];
 const COLORS = ['', '#3b6ea5', '#6a4fa3', '#2e7d32', '#ef6c00', '#c62828', '#00838f', '#616161'];
 const TYPE_HELP = { 'イベント': '入札・会議など日付ごとの予定（1段目）', '工事': '工事・案件の期間バー（2段目）', '人': '出張・休みなど人の予定（3段目）' };
@@ -191,7 +196,36 @@ function fail(e) { busy = false; toast('エラー：' + (e && e.message ? e.mess
 
 function load() {
   $('ymLbl').textContent = cur.getFullYear() + '年' + (cur.getMonth() + 1) + '月';
-  google.script.run.withSuccessHandler(d => { D = d; render(); }).withFailureHandler(fail).getEditData(KEY, ymOf(cur));
+  google.script.run.withSuccessHandler(d => {
+    D = d; render();
+    if (!editorName() && !askedEditor) { askedEditor = true; askEditor(); }   // 最初の1回だけ名前を聞く
+  }).withFailureHandler(fail).getEditData(KEY, ymOf(cur));
+}
+
+/* ---------- 入力者名（変更履歴用。このスマホ・PCに記憶） ---------- */
+let askedEditor = false;
+function editorName() { try { return localStorage.getItem('editorName') || ''; } catch (e) { return ''; } }
+function setEditor(n) {
+  n = String(n || '').replace(/[\r\n]/g, '').trim().slice(0, 30);
+  try { localStorage.setItem('editorName', n); } catch (e) { /* 記憶できない端末では、開いている間だけ使う */ }
+  KEY = n ? KEY_BASE + '\n' + n : KEY_BASE;
+  if (D && tab !== 'st') render();   // 一覧の上の 👤 表示を更新
+}
+function askEditor() {
+  const cur = editorName();
+  const owners = (D && D.owners) || [];
+  $('sheet').innerHTML = '<h2>入力する人</h2>' +
+    '<div class="hint">追加・変更・削除をしたときに、スプレッドシートの「変更履歴」に残す名前です。この端末に記憶するので、最初に1回選べばOK（一覧の上の 👤 を押すと変更できます）</div>' +
+    (owners.length ? '<div class="ochips" style="margin-top:10px">' + owners.map(o => '<button type="button" class="ochip' + (o.name === cur ? ' on' : '') +
+      '" style="--c:' + h(o.color) + '" data-n="' + h(o.name) + '" onclick="pickEditor(this.dataset.n)"><i></i>' + h(o.name) + '</button>').join('') + '</div>' : '') +
+    '<label>' + (owners.length ? '一覧に無いときは名前を入力' : '名前') + '</label><input id="edName" maxlength="30" value="' + h(cur) + '" placeholder="例：平安">' +
+    '<div class="acts"><button class="cancel" onclick="closeForm()">あとで</button><button class="save" onclick="pickEditor(val(\'edName\'))">決定</button></div>';
+  $('ov').classList.add('on');
+}
+function pickEditor(n) {
+  n = String(n || '').trim();
+  if (!n) return toast('名前を選ぶか入力してください');
+  setEditor(n); closeForm(); toast(n + ' さんの名前で記録します');
 }
 function moveMonth(n) { cur = new Date(cur.getFullYear(), cur.getMonth() + n, 1); $('main').innerHTML = '<div id="loading">読み込み中…</div>'; load(); }
 function setTab(t) { tab = t; ['Ev','Tk','Nt','St','Hp'].forEach(k => $('tab' + k).classList.toggle('on', t === k.toLowerCase())); $('fab').style.display = (t === 'st' || t === 'hp') ? 'none' : ''; render(); }
@@ -207,9 +241,12 @@ let siteFilter = '';
 /** 拠点で絞り込み（拠点が空のデータは全拠点共通として常に表示） */
 function siteOk(x) { return !siteFilter || !x.site || x.site === siteFilter; }
 function filterBar() {
-  if (!D.sites || !D.sites.length) return '';
+  // 右端に入力者名（押すと変更）。ヘッダーに置くとスマホで月の切替ボタンがはみ出すため、ここに置く
+  const n = editorName();
+  const who = '<button type="button" class="who' + (n ? '' : ' unset') + '" onclick="askEditor()" title="入力する人（変更履歴に残る名前）">👤 ' + h(n || '名前を設定') + '</button>';
+  if (!D.sites || !D.sites.length) return '<div class="fbar">' + who + '</div>';
   return '<div class="fbar">拠点で絞り込み：<select onchange="siteFilter=this.value;render()"><option value="">すべて</option>' +
-    D.sites.map(s => '<option' + (siteFilter === s ? ' selected' : '') + '>' + h(s) + '</option>').join('') + '</select></div>';
+    D.sites.map(s => '<option' + (siteFilter === s ? ' selected' : '') + '>' + h(s) + '</option>').join('') + '</select>' + who + '</div>';
 }
 function siteChip(x) { return x.site ? '<span class="type sitec">' + h(x.site) + '</span> ' : ''; }
 function siteField(id, val) {
@@ -621,12 +658,16 @@ function settingsView() {
         '<div><label>表示日数</label><select id="sWxDays">' + [3, 4, 5].map(n => '<option' + (Number(ST['天気_日数']) === n ? ' selected' : '') + '>' + n + '</option>').join('') + '</select></div></div>' +
         '<label>地域内の番号（0＝最初。離島などは1以降）</label><input type="number" id="sWxIdx" min="0" max="20" value="' + h(ST['天気_エリア番号']) + '">' +
         '<div class="hint">気象庁の予報を1時間ごとに取得</div>') +
+      panel('気象警報・注意報', segBtns('警報_表示', ['ON', 'OFF'], ['表示する', '表示しない']) +
+        '<div class="hint">天気予報と同じ地域の警報・注意報を、TV画面の上（天気の左）とテロップに出します。<br>' +
+        '警報以上（警報・危険警報・特別警報）が新しく出たときは、チャイム＋読み上げでお知らせします（「音」の設定でチャイムをONにしたとき）。気象庁のデータを10分ごとに確認</div>') +
       panel('お知らせテロップ', segBtns('テロップ表示', ['ON', 'OFF'], ['表示する', '表示しない']) +
         '<label>流れる速さ</label>' + segBtns('テロップ速度', ['遅い', '標準', '速い']) +
         '<div class="hint">お知らせの追加は「お知らせ」タブから</div>') +
       panel('スマホ入力用QRコード', segBtns('QRコード', ['ON', 'OFF'], ['表示する', '表示しない']) +
         '<label>QRコードの横の説明</label><input id="sQrTxt" value="' + h(ST['QRコード_説明']) + '" maxlength="40" placeholder="スマホで読み取ると予定を入力できます">' +
-        '<div class="hint">TV画面の右上（時計の左）に出ます。読み取ると、この入力画面が開きます。<br>⚠ TVが来客から見える場所なら「表示しない」に（だれでも入力できてしまうため）</div>');
+        '<div class="hint">TV画面の右上（時計の左）に出ます。読み取ると、この入力画面が開きます。<br>⚠ TVが来客から見える場所なら「表示しない」に（だれでも入力できてしまうため）<br>' +
+        '入力URLが漏れたかもと思ったら、スプレッドシートのメニュー「📅 電子予定表 → 編集キーを再発行」で入力URLを変えられます</div>');
   } else if (stCat === 'media') {
     const yt = String(ST['YouTube_URL'] || '').trim();
     body = panel('写真・図面・動画', '<div class="two"><div><label>写真を出す間隔（分）</label><input type="number" id="sPhInt" min="1" max="120" value="' + h(ST['写真表示_間隔(分)']) + '"></div>' +
@@ -1001,6 +1042,7 @@ function wxStatusHtml() {
 }
 
 applyView();
+setEditor(editorName());
 load();
 </script>
 </body>

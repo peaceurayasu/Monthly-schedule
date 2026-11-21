@@ -80,6 +80,14 @@ function inWatchTime_(s, d) {
   return st <= en ? cur >= st && cur < en : cur >= st || cur < en;
 }
 
+/** 稼働記録と停止メール送信済みの印をすべて消す */
+function clearHeartbeats_() {
+  const props = PropertiesService.getScriptProperties();
+  Object.keys(props.getProperties())
+    .filter(k => k.indexOf(HB_PREFIX) === 0 || k.indexOf(HB_ALERT_PREFIX) === 0)
+    .forEach(k => props.deleteProperty(k));
+}
+
 /** 撤去したTVなどを一覧から消す */
 function resetHeartbeat(key, name) {
   checkKey_(key);
@@ -212,7 +220,13 @@ function saveNotifySettings(key, o) {
   clean['前日通知_時刻'] = isNaN(hour) ? 17 : Math.max(0, Math.min(23, hour));
   if ((clean['稼働チェック'] === 'ON') && !clean['通知先メール']) throw new Error('TV稼働チェックには通知先メールが必要です');
 
+  // OFF→ON にしたときは、それまでの記録を消してから監視を始める。
+  // 残したままだと、OFFの間に撤去・電源OFFしたTVの「止まっています」メールがONにした直後にまとめて届く。
+  // 動いているTVは次の自動更新（数分）で記録し直される。
+  if (String(getSettings_()['稼働チェック']) !== 'ON' && clean['稼働チェック'] === 'ON') clearHeartbeats_();
+
   writeSettings_(clean);
+  logChange_('変更', '通知設定', '', '');
 
   const p = PropertiesService.getScriptProperties();
   if (o.cwToken) p.setProperty('CW_TOKEN', cut_(o.cwToken, 100));

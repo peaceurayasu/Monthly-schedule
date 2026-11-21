@@ -57,10 +57,15 @@ function archiveMonths_() {
   return Math.max(1, Math.min(24, Number(getSettings_()['アーカイブ月数']) || 3));
 }
 
-/** この日付より前に終わった予定が対象 */
+/**
+ * この日付より前に終わった予定が対象。
+ * 月末は日をその月の最終日に合わせる（5/31 の3か月前を「2/31＝3/3」ではなく 2/28 にする）。
+ */
 function archiveCutoff_() {
   const t = parseDate_(todayStr_());
-  return fmtYmd_(new Date(t.getFullYear(), t.getMonth() - archiveMonths_(), t.getDate()));
+  const first = new Date(t.getFullYear(), t.getMonth() - archiveMonths_(), 1);
+  const lastDay = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  return fmtYmd_(new Date(first.getFullYear(), first.getMonth(), Math.min(t.getDate(), lastDay)));
 }
 
 function countArchiveTargets_() {
@@ -98,6 +103,7 @@ function archiveOldEvents_() {
     sh.getRange(2, 1, rows.length, width).clearContent();
     if (keep.length) sh.getRange(2, 1, keep.length, width).setValues(keep);
     bumpDataVersion_();
+    logChange_('アーカイブ', '予定', old.length + '件を「' + SHEET.ARCHIVE + '」へ移動', '');
     return old.length;
   } finally {
     lock.releaseLock();
