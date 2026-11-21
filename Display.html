@@ -34,7 +34,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);overflow
 .wn.l3{background:#aa00aa;color:#fff;animation:wnBlink 1.5s ease-in-out infinite}
 .wn.l4{background:#0c000c;color:#fff;box-shadow:0 0 0 .3vh #fff inset;animation:wnBlink 1.2s ease-in-out infinite}
 @keyframes wnBlink{50%{opacity:.65}}
-.tk-item.warn{color:#ffd54f}
+/* 注意報はテーマの強調色（ダーク＝黄、ライト＝濃いオレンジ）。黄色固定だとライトテーマの白背景で読めなかった */
+.tk-item.warn{color:var(--accent)}
 .tk-item.warn.heavy{color:var(--sun)}
 .tk-warn{background:#d32f2f;color:#fff;font-size:2vh;padding:.2vh .5vw;border-radius:.5vh;margin-right:.6vw;vertical-align:middle}
 .wx{flex:none}
